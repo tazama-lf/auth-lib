@@ -8,7 +8,7 @@ export class AuthenticationService implements IAuthenticationService {
     this.authService = new KeycloakService();
   }
 
-  async getToken() {
-    return await this.authService.getToken();
+  async getToken(username: string, password: string) {
+    return await this.authService.getToken(username, password);
   }
 }

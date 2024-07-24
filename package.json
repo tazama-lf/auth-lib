@@ -1,6 +1,6 @@
 {
   "name": "@frmscoe/auth-lib",
-  "version": "1.0.0",
+  "version": "0.0.2",
   "description": "Authentication Library for Tazama",
   "main": "lib/index.js",
   "scripts": {

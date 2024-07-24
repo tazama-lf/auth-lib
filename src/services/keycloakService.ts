@@ -14,13 +14,13 @@ export class KeycloakService implements IAuthenticationService {
     this.baseUrl = authConfig.authURL;
   }
 
-  async getToken(): Promise<TazamaToken> {
+  async getToken(username: string, password: string): Promise<TazamaToken> {
 
     const form = new URLSearchParams();
-    form.append("client_id", "auth-lib");
-    form.append("client_secret", "K0k7KIo3u0IKeFeciCnGrHhmLZZn5oiR");
-    form.append("username", "user");
-    form.append("password", "12345");
+    form.append("client_id", authConfig.clientID);
+    form.append("client_secret", authConfig.clientSecret);
+    form.append("username", username);
+    form.append("password", password);
     form.append("grant_type", "password");
 
     const myHeaders = new Headers();

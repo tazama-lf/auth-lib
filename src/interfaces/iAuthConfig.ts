@@ -10,10 +10,14 @@ interface IAuthConfig {
   authURL: string;
   keycloakRealm: string;
   certPath: string;
+  clientSecret: string;
+  clientID: string
 }
 
 export const authConfig: IAuthConfig = {
   authURL: process.env.AUTH_URL as string,
   keycloakRealm: process.env.KEYCLOAK_REALM as string,
-  certPath: process.env.CERT_PATH as string
+  certPath: process.env.CERT_PATH as string,
+  clientSecret: process.env.CLIENT_SECRET as string,
+  clientID: process.env.CLIENT_ID as string
 };
