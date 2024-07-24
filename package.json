@@ -1,0 +1,48 @@
+{
+  "name": "@frmscoe/auth-lib",
+  "version": "1.0.0",
+  "description": "Authentication Library for Tazama",
+  "main": "lib/index.js",
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "clean": "npx rimraf lib node_modules coverage package-lock.json",
+    "dry": "npm publish --dry-run",
+    "test": "jest --config=jest.config.ts --passWithNoTests",
+    "lint": "npm run lint:eslint && npm run lint:prettier",
+    "lint:eslint": "eslint \"**/*.ts\"",
+    "lint:eslint-unused": "eslint --report-unused-disable-directives \"**/*.ts\"",
+    "lint:eslint-no-inline": "eslint --no-inline-config \"**/*.ts\"",
+    "lint:prettier": "prettier --check \"**/*.ts\"",
+    "fix:eslint": "eslint --fix \"**/*.ts\"",
+    "fix:prettier": "prettier --write \"**/*.ts\""
+  },
+    "files": [
+    "lib"
+  ],
+  "publishConfig": {
+    "@frmscoe:registry": "https://npm.pkg.github.com/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/frmscoe/auth-lib.git"
+  },
+  "keywords": [
+    "authentication"
+  ],
+  "author": "Jean-Pierre Nell",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/frmscoe/auth-lib/issues"
+  },
+  "homepage": "https://github.com/frmscoe/auth-lib#readme",
+  "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.6",
+    "@types/node": "^20.14.11",
+    "dotenv": "^16.4.5",
+    "tslib": "^2.6.3",
+    "typescript": "^5.5.4"
+  },
+  "dependencies": {
+    "jsonwebtoken": "^9.0.2"
+  }
+}

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 # Logs
 logs
 *.log
@@ -90,6 +92,7 @@ out
 # Nuxt.js build / generate output
 .nuxt
 dist
+lib
 
 # Gatsby files
 .cache/
