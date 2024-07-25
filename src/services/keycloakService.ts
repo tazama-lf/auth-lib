@@ -15,7 +15,6 @@ export class KeycloakService implements IAuthenticationService {
   }
 
   async getToken(username: string, password: string): Promise<TazamaToken> {
-
     const form = new URLSearchParams();
     form.append("client_id", authConfig.clientID);
     form.append("client_secret", authConfig.clientSecret);
@@ -48,16 +47,21 @@ export class KeycloakService implements IAuthenticationService {
   async generateTazamaToken(
     authToken: KeycloakAuthToken
   ): Promise<TazamaToken> {
-    
-    const decodedToken = await jwt.decode(authToken.accessToken) as JwtPayload;
-    
+    const decodedToken = (await jwt.decode(
+      authToken.accessToken
+    )) as JwtPayload;
+
     return {
       clientId: decodedToken.sub!,
       iss: decodedToken.iss!,
       sid: decodedToken.sid,
       exp: decodedToken.exp!,
       tokenString: authToken.accessToken,
-      claims: [],
+      claims: this.mapTazamaRoles(decodedToken),
     };
+  }
+
+  mapTazamaRoles(decodedToken: JwtPayload) : Array<string>{
+    return decodedToken["resource_access"]["account"]["roles"] as Array<string>
   }
 }

@@ -2,7 +2,7 @@ import { IAuthenticationService } from "../interfaces/iAuthenticationService";
 import { KeycloakService } from "./keycloakService";
 
 export class AuthenticationService implements IAuthenticationService {
-  authService: IAuthenticationService;
+  private authService: IAuthenticationService;
 
   constructor() {
     this.authService = new KeycloakService();
