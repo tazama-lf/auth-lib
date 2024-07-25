@@ -11,6 +11,8 @@ export function signToken(token: TazamaToken) : string | Error | any {
         return error;    
     }
 
-    const signedToken = jwt.sign(token, privateKey, { algorithm: 'RS256', expiresIn: '4s' });
+  const signedToken = jwt.sign(token, privateKey, {
+    algorithm: "RS256",
+  });
     return signedToken;
 }
