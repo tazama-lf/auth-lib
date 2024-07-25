@@ -14,7 +14,7 @@ export class KeycloakService implements IAuthenticationService {
     this.baseUrl = authConfig.authURL;
   }
 
-  async getToken(username: string, password: string): Promise<TazamaToken> {
+  async getToken(username: string, password: string): Promise<string> {
     const form = new URLSearchParams();
     form.append("client_id", authConfig.clientID);
     form.append("client_secret", authConfig.clientSecret);
