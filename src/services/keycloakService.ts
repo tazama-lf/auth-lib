@@ -4,6 +4,8 @@ import { KeycloakAuthToken } from "../interfaces/iKeycloakAuthToken";
 import { TazamaToken } from "../interfaces/iTazamaToken";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { signToken } from "./jwtService";
+import { error } from "console";
+import { KeycloakJwtToken } from "../interfaces/iKeycloackJwtToken";
 
 export class KeycloakService implements IAuthenticationService {
   realm: string;
@@ -47,21 +49,31 @@ export class KeycloakService implements IAuthenticationService {
   async generateTazamaToken(
     authToken: KeycloakAuthToken
   ): Promise<TazamaToken> {
-    const decodedToken = (await jwt.decode(
-      authToken.accessToken
-    )) as JwtPayload;
+    const decodedToken = await jwt.decode(authToken.accessToken);
+
+    if (!decodedToken || typeof decodedToken === "string") {
+      throw error(`Token is in the wrong format, received ${typeof decodedToken}`);
+    }
+
+    if (!decodedToken.sub || !decodedToken.iss || !decodedToken.exp) {
+      throw error(`Token is missing required properties: sub: ${decodedToken.sub}, iss: ${decodedToken.iss}, exp: ${decodedToken.exp}`);
+    }
 
     return {
-      clientId: decodedToken.sub!,
-      iss: decodedToken.iss!,
+      clientId: decodedToken.sub,
+      iss: decodedToken.iss,
       sid: decodedToken.sid,
-      exp: decodedToken.exp!,
+      exp: decodedToken.exp,
       tokenString: authToken.accessToken,
       claims: this.mapTazamaRoles(decodedToken),
     };
   }
 
-  mapTazamaRoles(decodedToken: JwtPayload) : Array<string>{
-    return decodedToken["resource_access"]["account"]["roles"] as Array<string>
+  mapTazamaRoles(decodedToken: KeycloakJwtToken): Array<string> {
+    if (!decodedToken.resource_access){
+      throw error(`No Roles configured for user`);
+    }
+
+    return decodedToken.resource_access.account.roles;
   }
 }

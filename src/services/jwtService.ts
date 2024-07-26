@@ -21,7 +21,8 @@ export function verifyToken(signedToken: string) {
   const publicKey = fs.readFileSync(`./publickey.crt`);
 
   try {
-    const verifyRes = jwt.verify(signedToken, publicKey) as JwtPayload;
+    const verifyRes = jwt.verify(signedToken, publicKey);
+    return verifyRes;
   } catch (error) {
     if (error instanceof TokenExpiredError) {
       console.error("401 Unauthorized - token expired");
