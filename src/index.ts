@@ -1,7 +1,7 @@
-import { TazamaToken } from "./interfaces/iTazamaToken";
-import { AuthenticationService } from "./services/authenticationFactory";
-import { validateToken } from "./services/tazamaService";
+import { type TazamaToken } from './interfaces/iTazamaToken';
+import { AuthenticationService } from './services/authenticationFactory';
+import { validateTokenAndClaims } from './services/tazamaService';
 
 export { AuthenticationService };
-export { validateToken };
-export { TazamaToken };
+export { validateTokenAndClaims };
+export type { TazamaToken };
