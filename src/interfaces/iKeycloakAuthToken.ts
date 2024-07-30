@@ -1,5 +1,5 @@
 export interface KeycloakAuthToken {
-    accessToken: string;
-    tokenType: string;
-    refreshToken: string;
+  accessToken: string;
+  tokenType: string;
+  refreshToken: string;
 }
