@@ -64,10 +64,20 @@ export class KeycloakService implements IAuthenticationService {
   }
 
   mapTazamaRoles(decodedToken: KeycloakJwtToken): string[] {
-    if (!decodedToken.realm_access) {
-      throw new Error('No Roles configured for user');
+    const roles: string[] = [];
+
+    for (const res in decodedToken.resource_access) {
+      for (const role of decodedToken.resource_access[res].roles) {
+        roles.push(role);
+      }
     }
 
-    return decodedToken.realm_access.roles;
+    if (decodedToken.realm_access) {
+      for (const role of decodedToken.realm_access.roles) {
+        roles.push(role);
+      }
+    }
+
+    return roles;
   }
 }
