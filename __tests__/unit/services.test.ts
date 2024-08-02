@@ -28,7 +28,7 @@ describe('App Services', () => {
     expect(token).toBeDefined();
   });
 
-  it('should handle getToken from AuthenticationService - no realm access', async () => {
+  it('should handle getToken from AuthenticationService - no roles', async () => {
     const mockKeycloakAuthTokenNoResourceAccess = {
       access_token:
         'eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE3MjIyNTU4ODMsImlhdCI6MTcyMjI1NTU4MywianRpIjoiYzZiZDc5NjQtZDRlZS00OWQ5LWFlYzktZTA3NWU1N2E2OTAxIiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo4MDgwL3JlYWxtcy90YXphbWEiLCJhdWQiOiJhY2NvdW50Iiwic3ViIjoiM2U1ZjQ5MjYtYjVjMi00YjQ2LTk0OTItNjQwYzg1YTcwZDM5IiwidHlwIjoiQmVhcmVyIiwiYXpwIjoiYXV0aC1saWItY2xpZW50Iiwic2Vzc2lvbl9zdGF0ZSI6IjIxNTdiNjNhLTFjZWQtNDQ0Mi04YjNiLTMyZjg2OTFkYTdkNSIsImFjciI6IjEiLCJhbGxvd2VkLW9yaWdpbnMiOlsiLyoiXSwic2NvcGUiOiJlbWFpbCBwcm9maWxlIiwic2lkIjoiMjE1N2I2M2EtMWNlZC00NDQyLThiM2ItMzJmODY5MWRhN2Q1IiwiZW1haWxfdmVyaWZpZWQiOnRydWUsInByZWZlcnJlZF91c2VybmFtZSI6InRhemFtYS11c2VyIiwiZW1haWwiOiJ0YXphbWEtdXNlckBleGFtcGxlLmNvbSJ9.pc2XBV060J-omkqji0ZzFPZCB5bA0yZh98p0IalNB6o',
@@ -44,14 +44,11 @@ describe('App Services', () => {
     const authService = new AuthenticationService();
 
     const authServiceSpy = jest.spyOn(authService, 'getToken');
-    try {
-      await authService.getToken('testUser', 'testPassword');
-      throw new Error('UNREACHABLE');
-    } catch (err) {
-      expect(err).toEqual(new Error('No Roles configured for user'));
-    }
+
+    const token = await authService.getToken('testUser', 'testPassword');
 
     expect(authServiceSpy).toHaveBeenCalledTimes(1);
+    expect(token).toBeDefined()
   });
 
   it('should handle getToken from AuthenticationService - bad cert', async () => {

@@ -15,6 +15,14 @@ export class KeycloakService implements IAuthenticationService {
     this.baseUrl = authConfig.authURL;
   }
 
+  /**
+   * Authenticates with the provided username and password via KeyCloak to get a KeyCloak token
+   * Generates a TazamaToken from the KeyCloak Token with added claims
+   *
+   * @param {string} username - The username for authentication.
+   * @param {string} password - The password for authentication.
+   * @returns {Promise<string>} - A promise that resolves to a signed JWT token.
+  */
   async getToken(username: string, password: string): Promise<string> {
     const form = new URLSearchParams();
     form.append('client_id', authConfig.clientID);
@@ -42,6 +50,12 @@ export class KeycloakService implements IAuthenticationService {
     return signToken(await this.generateTazamaToken(token));
   }
 
+  /**
+   * Decodes the given Keycloak authentication token and maps out the associated claims.
+   *
+   * @param {KeycloakAuthToken} authToken - The Keycloak authentication token to decode.
+   * @returns {Promise<TazamaToken>} - A promise that resolves to a TazamaToken object containing the mapped claims.
+  */
   async generateTazamaToken(authToken: KeycloakAuthToken): Promise<TazamaToken> {
     const decodedToken = jwt.decode(authToken.accessToken);
 
@@ -63,11 +77,27 @@ export class KeycloakService implements IAuthenticationService {
     };
   }
 
+  /**
+   * Extracts and maps the claims from the decoded Keycloak JWT token.
+   *
+   * @param {KeycloakJwtToken} decodedToken - The decoded JWT token from Keycloak.
+   * @returns {string[]} - An array of privileges extracted from the decoded token.
+  */
   mapTazamaRoles(decodedToken: KeycloakJwtToken): string[] {
-    if (!decodedToken.realm_access) {
-      throw new Error('No Roles configured for user');
+    const roles: string[] = [];
+
+    for (const res in decodedToken.resource_access) {
+      for (const role of decodedToken.resource_access[res].roles) {
+        roles.push(role);
+      }
     }
 
-    return decodedToken.realm_access.roles;
+    if (decodedToken.realm_access) {
+      for (const role of decodedToken.realm_access.roles) {
+        roles.push(role);
+      }
+    }
+
+    return roles;
   }
 }
