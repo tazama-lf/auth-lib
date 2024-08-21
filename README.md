@@ -15,15 +15,22 @@ Thereafter you can run
 
 ## Usage
 
+When Retrieving a token - Please note, the Auth-Service already does this. 
+
 ```
-// Initialise the service
+// Initialize the service
+import { validateTokenAndClaims } from '@frmscoe/auth-lib';
 export const authService: AuthenticationService = new AuthenticationService();
 
 // Get Token
 const token = await authService.getToken(username, password);
+```
 
+Validating the token received against roles provided.
+```
 // Validate Roles
-const validated = validateTokenAndClaims(token, [claim]);
+import { validateTokenAndClaims } from '@frmscoe/auth-lib';
+const validated = validateTokenAndClaims(token, ["POST_V1_EVALUATE_ISO20022_PAIN_001_001_11"]);
 ```
 
 ##### Environment variables
