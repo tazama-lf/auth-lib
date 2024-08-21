@@ -11,7 +11,7 @@ A personal access token is required to install this repository. For more informa
 https://docs.github.com/en/packages/learn-github-packages/about-permissions-for-github-packages#about-scopes-and-permissions-for-package-registries
 
 Thereafter you can run 
-  > npm install @tazama-lf-lf/auth-lib
+  > npm install @tazama-lf/auth-lib
 
 ## Usage
 
