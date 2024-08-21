@@ -11,7 +11,7 @@ A personal access token is required to install this repository. For more informa
 https://docs.github.com/en/packages/learn-github-packages/about-permissions-for-github-packages#about-scopes-and-permissions-for-package-registries
 
 Thereafter you can run 
-  > npm install @frmscoe/auth-lib
+  > npm install @tazama-lf-lf/auth-lib
 
 ## Usage
 
@@ -19,7 +19,7 @@ When Retrieving a token - Please note, the Auth-Service already does this.
 
 ```
 // Initialize the service
-import { validateTokenAndClaims } from '@frmscoe/auth-lib';
+import { validateTokenAndClaims } from '@tazama-lf/auth-lib';
 export const authService: AuthenticationService = new AuthenticationService();
 
 // Get Token
@@ -29,7 +29,7 @@ const token = await authService.getToken(username, password);
 Validating the token received against roles provided.
 ```
 // Validate Roles
-import { validateTokenAndClaims } from '@frmscoe/auth-lib';
+import { validateTokenAndClaims } from '@tazama-lf/auth-lib';
 const validated = validateTokenAndClaims(token, ["POST_V1_EVALUATE_ISO20022_PAIN_001_001_11"]);
 ```
 
