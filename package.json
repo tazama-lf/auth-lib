@@ -1,6 +1,6 @@
 {
-  "name": "@frmscoe/auth-lib",
-  "version": "0.0.8",
+  "name": "@tazama-lf/auth-lib",
+  "version": "0.0.9",
   "description": "Authentication Library for Tazama",
   "main": "lib/index.js",
   "scripts": {
@@ -23,11 +23,11 @@
     "lib"
   ],
   "publishConfig": {
-    "@frmscoe:registry": "https://npm.pkg.github.com/"
+    "@tazama-lf:registry": "https://npm.pkg.github.com/"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/frmscoe/auth-lib.git"
+    "url": "git+https://github.com/tazama-lf/auth-lib.git"
   },
   "keywords": [
     "authentication"
@@ -35,9 +35,9 @@
   "author": "Jean-Pierre Nell",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/frmscoe/auth-lib/issues"
+    "url": "https://github.com/tazama-lf/auth-lib/issues"
   },
-  "homepage": "https://github.com/frmscoe/auth-lib#readme",
+  "homepage": "https://github.com/tazama-lf/auth-lib#readme",
   "devDependencies": {
     "@stylistic/eslint-plugin": "^2.4.0",
     "@types/jest": "^29.5.12",
