@@ -1,5 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
+# Please do not attempt to edit this flow without the direct consent from the DevOps team. This file is managed centrally.
+
 name: Publish dev npm package to GitHub
 
 on:
