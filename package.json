@@ -2,6 +2,11 @@
   "name": "@tazama-lf/auth-lib",
   "version": "1.0.0",
   "description": "Authentication Library for Tazama",
+  "author": {
+    "name": "Tazama",
+    "email": "engineering@tazama.org",
+    "url": "https://tazama.org"
+  },
   "main": "lib/index.js",
   "scripts": {
     "build": "tsc --project tsconfig.json",
@@ -59,7 +64,9 @@
     "typescript": "^5.5.4"
   },
   "dependencies": {
-    "jsonwebtoken": "^9.0.2"
+    "jsonwebtoken": "^9.0.2",
+    "tslib": "^2.6.3",
+    "dotenv": "^16.4.5"
   },
   "lint-staged": {
     "*.{js,ts}": [
