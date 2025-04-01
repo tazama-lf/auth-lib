@@ -10,6 +10,11 @@ Library used to get and validate tokens for Tazama.
 A personal access token is required to install this repository. For more information read the following.
 https://docs.github.com/en/packages/learn-github-packages/about-permissions-for-github-packages#about-scopes-and-permissions-for-package-registries
 
+Make sure you've got an .npmrc file in the root of your project, specifying where the @tazama-lf repo is. 
+```
+@tazama-lf:registry=https://npm.pkg.github.com
+```
+
 Thereafter you can run 
   > npm install @tazama-lf/auth-lib
 
