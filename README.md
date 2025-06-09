@@ -35,7 +35,6 @@ const authService: TazamaAuthentication = new TazamaAuthentication([exampleProvi
 // 2. Initialize provider config and instantiate the provider
 try {
   await authService.init();
-  // authService.instantiateProvider(exampleProvider);
 } catch (error) {
   // handle error
 }
