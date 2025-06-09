@@ -1,4 +1,4 @@
-export interface TazamaToken {
+interface TazamaToken {
   exp: number;
   sid: string;
   iss: string;
@@ -7,4 +7,6 @@ export interface TazamaToken {
   claims: string[];
 }
 
-export type ClaimValidationResult = Record<string, boolean>;
+type ClaimValidationResult = Record<string, boolean>;
+
+export type { ClaimValidationResult, TazamaToken };
