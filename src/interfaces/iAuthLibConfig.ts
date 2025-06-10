@@ -6,20 +6,14 @@ dotenv({
   path: path.resolve(__dirname, '../.env'),
 });
 
-interface IAuthConfig {
-  authURL: string;
-  keycloakRealm: string;
+interface IAuthLibConfig {
   certPathPrivate: string;
   certPathPublic: string;
-  clientSecret: string;
-  clientID: string;
 }
 
-export const authConfig: IAuthConfig = {
-  authURL: process.env.AUTH_URL!,
-  keycloakRealm: process.env.KEYCLOAK_REALM!,
+const authLibConfig: IAuthLibConfig = {
   certPathPrivate: process.env.CERT_PATH_PRIVATE!,
   certPathPublic: process.env.CERT_PATH_PUBLIC!,
-  clientSecret: process.env.CLIENT_SECRET!,
-  clientID: process.env.CLIENT_ID!,
 };
+
+export { authLibConfig, type IAuthLibConfig };

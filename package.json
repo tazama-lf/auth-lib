@@ -1,11 +1,12 @@
 {
   "name": "@tazama-lf/auth-lib",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Authentication Library for Tazama",
   "main": "lib/index.js",
   "scripts": {
     "build": "tsc --project tsconfig.json",
     "clean": "npx rimraf lib node_modules coverage package-lock.json",
+    "dev": "node -r dotenv/config -r ts-node/register src/index.ts",
     "dry": "npm publish --dry-run",
     "pempriv": "openssl genpkey -algorithm RSA -out private-key.pem -pkeyopt rsa_keygen_bits:2048",
     "pempub": "openssl rsa -pubout -in private-key.pem -out public-key.pem",

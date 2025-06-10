@@ -3,7 +3,7 @@
 # Auth-Lib
 
 ## Overview
-Library used to get and validate tokens for Tazama.
+Library used to get and validate tokens for Tazama. Requires an auth provider to be installed alongside.
 
 ## Installation
 
@@ -18,22 +18,34 @@ Make sure you've got an .npmrc file in the root of your project, specifying wher
 Thereafter you can run 
   > npm install @tazama-lf/auth-lib
 
+Install an auth provider (The recommended provider to use is keycloak)
+  > npm install @tazama-lf/auth-lib-provider-keycloak
+
 ## Usage
 
-When Retrieving a token - Please note, the Auth-Service already does this. 
+When Retrieving a token - Please note, the [Auth-Service](https://github.com/tazama-lf/auth-service) already does this. 
 
-```
-// Initialize the service
-import { validateTokenAndClaims } from '@tazama-lf/auth-lib';
-export const authService: AuthenticationService = new AuthenticationService();
+```typescript
+// 1. Initialize the service and inject provider to use
+import { TazamaAuthentication } from '@tazama-lf/auth-lib';
 
-// Get Token
+const exampleProvider = '@tazama-lf/auth-lib-provider-keycloak' // example provider
+const authService: TazamaAuthentication = new TazamaAuthentication([exampleProvider]);
+
+// 2. Initialize provider config and instantiate the provider
+try {
+  await authService.init();
+} catch (error) {
+  // handle error
+}
+
+// 3. Get Token
 const token = await authService.getToken(username, password);
 ```
 
 Validating the token received against roles provided.
-```
-// Validate Roles
+```typescript
+// 1. Validate Roles
 import { validateTokenAndClaims } from '@tazama-lf/auth-lib';
 const validated = validateTokenAndClaims(token, ["POST_V1_EVALUATE_ISO20022_PAIN_001_001_11"]);
 ```
@@ -42,30 +54,49 @@ const validated = validateTokenAndClaims(token, ["POST_V1_EVALUATE_ISO20022_PAIN
 
 | Variable | Purpose | Example
 | ------ | ------ | ------ |
-| `AUTH_URL` | Base URL where KeyCloak is hosted | `https://keycloak.example.com:8080`
-| `KEYCLOAK_REALM` | KeyCloak Realm for Tazama | `tazama`
-| `CLIENT_ID` | KeyCloak defined client for auth-lib | `auth-lib-client`
-| `CLIENT_SECRET` | The secret of the KeyCloak client | `someClientGeneratedSecret123`
 | `CERT_PATH_PRIVATE` | The pem file path for signing Tazama tokens | `/path/to/private-key.pem`
 | `CERT_PATH_PUBLIC` | The pem file path for validating Tazama tokens | `/path/to/public-key.pem`
 
+## Architecture
+
+```mermaid
+classDiagram
+  class Application
+  class TazamaAuthProvider {
+    <<interface>>
+    +getToken(credentials)
+  }
+
+  class KeycloakAuthProvider {
+    +getToken(credentials)
+  }
+
+  class ConcreteAuthProvider {
+    +getToken(credentials)
+  }
+
+  class TazamaAuthentication {
+    -AuthProvider: TazamaAuthProvider
+    +setActive(authProvider)
+    +getToken(credentials)
+  }
+
+  Application --> TazamaAuthentication: uses
+  Application ..> KeycloakAuthProvider: imports
+  Application ..> ConcreteAuthProvider: imports
+  TazamaAuthentication o--> TazamaAuthProvider : invokes
+  KeycloakAuthProvider ..|> TazamaAuthProvider : implements
+  ConcreteAuthProvider ..|> TazamaAuthProvider : implements
+```
+
 ## Description
 
-This TypeScript project involves authentication and token management using Keycloak and JSON Web Tokens (JWT). The main components include interfaces, services, and utility functions to handle tokens.
+This TypeScript project involves authentication and token management using some auth provider (additional dependency) and JSON Web Tokens (JWT). The main components include interfaces, services, and utility functions to handle tokens.
 
-### src/services/authenticationFactory.ts
-This file contains the `AuthenticationService` class which acts as a factory for creating instances of authentication services. It abstracts the creation logic and provides a unified interface for obtaining authentication services.
+### src/services/tazamaAuthentication.ts
+This file contains the `TazamaAuthentication` class which is responsible for configuration and creation of instances of imported TazamaAuthProvider providers. It abstracts the creation logic and provides a unified interface for strategically retrieving authentication tokens.
 
-[src/services/authenticationFactory.ts]()
-
-### src/services/keycloakService.ts
-This file contains the KeycloakService class which implements the `IAuthenticationService` interface. It handles authentication with Keycloak and token generation. The main methods include:
-
- - `getToken`: Authenticates with Keycloak using a username and password to get a Keycloak token and then generates a TazamaToken.
- - `generateTazamaToken`: Decodes the Keycloak token and maps the associated claims to create a TazamaToken.
- - `mapTazamaRoles`: Extracts and maps the claims from the decoded Keycloak JWT token.
-
-[src/services/keycloakService.ts]()
+[src/services/tazamaAuthentication.ts]()
 
 ### src/services/jwtService.ts
 This file contains utility functions for signing and verifying JWT tokens using private and public PEM files. The main functions include:
@@ -87,17 +118,40 @@ This file defines the TazamaToken interface which outlines the structure of a to
 
 [src/interfaces/iTazamaToken.ts]()
 
-### src/interfaces/iKeycloakAuthToken.ts
-This file defines the `KeycloakAuthToken` interface which outlines the structure of a Keycloak authentication token. It includes properties like `accessToken`, `tokenType`, and `refreshToken`.
+### src/interfaces/iTazamaProvider.ts
+This file defines the `iTazamaProvider` interface which outlines the contract for an TazamaAuthentication service. It specifies the `getToken` method and allows for generic parameters to hand control over to providers implementing the `TazamaAuthProvider` interface.
 
-[src/interfaces/iKeycloakAuthToken.ts]()
-
-### src/interfaces/iAuthenticationService.ts
-This file defines the `IAuthenticationService` interface which outlines the contract for an authentication service. It specifies methods like `getToken` and `generateTazamaToken`.
-
-[src/interfaces/iAuthenticationService.ts]()
+[src/interfaces/iTazamaProvider.ts]()
 
 ### src/index.ts
 This file exports the main components of the library, including the `AuthenticationService` and `validateTokenAndClaims` function, as well as the `TazamaToken` type.
 
 [src/interfaces/index.ts]()
+
+## Creating Custom Providers
+
+Creation of new custom providers to use with the Auth-lib will have to create a class that implements the `TazamaAuthProvider` interface. The contract allows the provider class to specify what arguments that the `getToken(...)` method can ingest.
+
+For instance a getToken implementation with a three arguments (string, number, boolean) will require the custom provider to extend the class as follows.
+
+```typescript
+// Example 1
+class CustomProvider implements TazamaAuthProvider<[string, number, boolean]> {
+  // This gives getToken access to the following parameters
+  async getToken(a: string, b: number, c: boolean): Promise<string> {
+    // ...
+  }
+  // ...
+}
+```
+
+```typescript
+// Example 2
+class CustomProvider implements TazamaAuthProvider<[string, string]> {
+  // This gives getToken access to the following parameters
+  async getToken(a: string, b: string): Promise<string> {
+    // ...
+  }
+  // ...
+}
+```
