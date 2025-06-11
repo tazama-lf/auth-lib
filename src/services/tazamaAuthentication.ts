@@ -45,8 +45,7 @@ class TazamaAuthentication {
       throw new Error('No Provider Config');
     }
     for await (const provider of this.providerConfig) {
-      const success = await this.registerProvider(provider);
-      if (success) {
+      if (await this.registerProvider(provider)) {
         this.instantiateProvider(provider);
       }
     }
@@ -95,14 +94,10 @@ class TazamaAuthentication {
     if (this.providerInstances.has(providerName)) {
       return false;
     }
-    try {
-      const instance = new (providerConstructor as ProviderConstructor)();
-      this.providerInstances.set(providerName, instance);
-      this.setActive(providerName);
-    } catch (err) {
-      // Provider constructor error
-      return false;
-    }
+
+    const instance = new (providerConstructor as ProviderConstructor)();
+    this.providerInstances.set(providerName, instance);
+    this.setActive(providerName);
     return true;
   }
 

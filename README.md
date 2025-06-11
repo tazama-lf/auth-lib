@@ -155,3 +155,13 @@ class CustomProvider implements TazamaAuthProvider<[string, string]> {
   // ...
 }
 ```
+
+In the index.ts of the custom provider project we then have an exported register function auth-lib can use to invoke the custom provider's constructor upon initialization.
+
+```typescript
+function register(): TazamaAuthProvider<[string, string]> {
+  return /* CustomProvider */.prototype;
+}
+
+export { register };
+```

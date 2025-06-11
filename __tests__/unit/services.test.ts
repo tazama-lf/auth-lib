@@ -329,25 +329,24 @@ describe('App Services', () => {
     let configured;
     let registered;
     let instances;
-    let isInstantiated;
 
     try {
       authService.configureProvider(testProviderName);
       await authService.registerProvider(testProviderName);
 
-      isInstantiated = authService.instantiateProvider(testProviderName);
+      authService.instantiateProvider(testProviderName);
+      throw new Error('UNREACHABLE')
 
-      configured = authService.getConfigured();
-      registered = authService.getRegistered();
-      instances = authService.getInstances();
     } catch (err) {
       // Unreachable
-      expect(true).toEqual(false);
+      expect(err).toEqual(new TypeError('providerConstructor is not a constructor'));
     }
 
-    expect(registerSpy).toHaveBeenCalledTimes(1);
+    configured = authService.getConfigured();
+    registered = authService.getRegistered();
+    instances = authService.getInstances();
 
-    expect(isInstantiated).toEqual(false);
+    expect(registerSpy).toHaveBeenCalledTimes(1);
 
     expect(authServiceGetConfigSpy).toHaveReturnedWith([testProviderName]);
     expect(configured).toEqual([testProviderName]);
