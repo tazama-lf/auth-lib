@@ -159,13 +159,6 @@ This file exports the main components of the library, including the `Authenticat
 
 [src/interfaces/index.ts]()
 
-## Known provider plugins
-
-| Provider | Website | Resource  |
-| ------ | ------ | ------ |
-| `Keycloak` | https://www.keycloak.org/ | https://github.com/tazama-lf/auth-lib-provider-keycloak
-| `Sybrin` | https://www.sybrin.com/ | [Contact Sybrin](mailto:Johannes.Foley@sybrin.com&nbsp;)
-
 ## Creating Custom Providers
 
 Creation of new custom providers to use with the Auth-lib will have to create a class that implements the `TazamaAuthProvider` interface. The contract allows the provider class to specify what arguments that the `getToken(...)` method can ingest.
@@ -203,3 +196,10 @@ function register(): TazamaAuthProvider<[string, string]> {
 
 export { register };
 ```
+
+## Known provider plugins
+
+| Provider | Website | Resource  |
+| ------ | ------ | ------ |
+| `Keycloak` | https://www.keycloak.org/ | https://github.com/tazama-lf/auth-lib-provider-keycloak
+| `Sybrin` | https://www.sybrin.com/ | [Contact Sybrin](mailto:Johannes.Foley@sybrin.com&nbsp;)
