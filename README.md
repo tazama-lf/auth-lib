@@ -89,9 +89,40 @@ classDiagram
   ConcreteAuthProvider ..|> TazamaAuthProvider : implements
 ```
 
-## Description
+## Project Structure
 
 This TypeScript project involves authentication and token management using some auth provider (additional dependency) and JSON Web Tokens (JWT). The main components include interfaces, services, and utility functions to handle tokens.
+
+```
+kafka-relay-plugin/
+├── __tests__/unit
+│   └── services.test.ts           # Unit tests for the this project
+├── lib/                            # Compiled JavaScript output
+├── node_modules/                   # Installed dependencies
+├── src/    
+│   ├── interfaces/    
+│   │   ├── iAuthLibConfig.ts       # Global configuration (.env parsing)
+│   │   ├── iTazamaProvider.ts      # Shared custom auth provider interface definitions
+│   │   └── iTazamaToken.ts         # Tazama token interface definition
+│   ├── service/
+│   │   ├── jwtService.ts           # Jwt related services (sign/verify)
+│   │   ├── providerHelper.ts       # Custom auth provider utils
+│   │   ├── tazamaAuthentication.ts # Tazama authentication
+│   │   └── tazamaService.ts        # Tazama validation
+│   └── index.ts                    # Main entry point
+├── .editorconfig                   # Text/Code editor settings
+├── .gitignore                      # File/Folder ignore list for git
+├── .npmrc                          # Node Package Manager configuration
+├── .prettierignore                 # Prettier formatter ignore list
+├── .prettierrc.json                # Prettier formatter settings
+├── eslint.config.mjs               # Project linting tool rules
+├── LICENSE                         # Project License
+├── jest.config.ts                  # Jest configuration (unit tests)
+├── package-lock.json
+├── package.json                    # Project metadata and dependencies
+├── README.md                       # This file
+└── tsconfig.json                   # TypeScript configuration
+```
 
 ### src/services/tazamaAuthentication.ts
 This file contains the `TazamaAuthentication` class which is responsible for configuration and creation of instances of imported TazamaAuthProvider providers. It abstracts the creation logic and provides a unified interface for strategically retrieving authentication tokens.
@@ -127,6 +158,13 @@ This file defines the `iTazamaProvider` interface which outlines the contract fo
 This file exports the main components of the library, including the `AuthenticationService` and `validateTokenAndClaims` function, as well as the `TazamaToken` type.
 
 [src/interfaces/index.ts]()
+
+## Known provider plugins
+
+| Provider | Website | Resource  |
+| ------ | ------ | ------ |
+| `Keycloak` | https://www.keycloak.org/ | https://github.com/tazama-lf/auth-lib-provider-keycloak
+| `Sybrin` | https://www.sybrin.com/ | [Contact Sybrin](mailto:Johannes.Foley@sybrin.com&nbsp;)
 
 ## Creating Custom Providers
 
