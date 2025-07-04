@@ -1,7 +1,7 @@
-import fs from 'fs';
+import fs from 'node:fs';
 import jwt, { TokenExpiredError } from 'jsonwebtoken';
 import { authLibConfig } from '../interfaces/iAuthLibConfig';
-import { type TazamaToken } from '../interfaces/iTazamaToken';
+import type { TazamaToken } from '../interfaces/iTazamaToken';
 
 /**
  * Signs the token using a private PEM file (RS256).
@@ -27,13 +27,13 @@ export function signToken(token: TazamaToken): string {
  * Verifies the JWT token using a public PEM file.
  *
  * @param {string} signedToken - The signed JWT token to be verified.
- * @returns {string | jwt.JwtPayload | undefined} - The decoded payload if verification is successful, otherwise undefined.
+ * @returns {string | TazamaToken | undefined} - The decoded payload if verification is successful, otherwise undefined.
  */
-export function verifyToken(signedToken: string): string | jwt.JwtPayload | undefined {
+export function verifyToken(signedToken: string): string | TazamaToken | undefined {
   const publicKey = fs.readFileSync(authLibConfig.certPathPublic);
 
   try {
-    const verifyRes = jwt.verify(signedToken, publicKey);
+    const verifyRes = jwt.verify(signedToken, publicKey) as TazamaToken;
     return verifyRes;
   } catch (error) {
     if (error instanceof TokenExpiredError) {

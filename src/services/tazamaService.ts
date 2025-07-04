@@ -1,4 +1,4 @@
-import { type ClaimValidationResult } from '../interfaces/iTazamaToken';
+import type { ClaimValidationResult } from '../interfaces/iTazamaToken';
 import { verifyToken } from './jwtService';
 
 /**

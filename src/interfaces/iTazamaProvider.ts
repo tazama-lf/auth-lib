@@ -13,6 +13,7 @@ interface TazamaAuthProvider<TgetTokenArgs extends unknown[] = unknown[]> {
   getToken: (...args: TgetTokenArgs) => Promise<string>;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-arguments -- Explicit helps with implementers
 type ProviderConstructor = new (...args: unknown[]) => TazamaAuthProvider<unknown[]>;
 
 export type { TazamaAuthProvider, ProviderConstructor };
