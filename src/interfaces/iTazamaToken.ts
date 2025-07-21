@@ -4,6 +4,7 @@ interface TazamaToken {
   iss: string;
   tokenString: string;
   clientId: string;
+  tenantId: string;
   claims: string[];
 }
 
