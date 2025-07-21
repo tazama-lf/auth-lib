@@ -6,6 +6,7 @@ interface TazamaToken extends jwt.JwtPayload {
   exp: number;
   iss: string;
   sid: string;
+  tenantId: string;
   tokenString: string;
 }
 
