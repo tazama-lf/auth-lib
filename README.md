@@ -145,7 +145,7 @@ This file contains utility functions for validating tokens and their claims. The
 [src/services/tazamaService.ts]()
 
 ### src/interfaces/iTazamaToken.ts
-This file defines the TazamaToken interface which outlines the structure of a token. It includes properties like `exp` (expiration time), `sid` (session ID), `iss` (issuer), `tokenString`, `clientId`, and `claims` (an array of strings representing the token's claims). It also defines the ClaimValidationResult type.
+This file defines the TazamaToken interface which outlines the structure of a token. It includes properties like `exp` (expiration time), `sid` (session ID), `iss` (issuer), `tokenString`, `clientId`, `tenantId`, and `claims` (an array of strings representing the token's claims). It also defines the ClaimValidationResult type.
 
 [src/interfaces/iTazamaToken.ts]()
 
