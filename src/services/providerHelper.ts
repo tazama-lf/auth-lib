@@ -1,18 +1,17 @@
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 
 /**
  * Lists all dependencies in project based on filter
  *
- * @async
  * @param {string} [filter='']
  * @returns {Promise<string[]>}
  */
-async function listAvailableProviders(filter: string = ''): Promise<string[]> {
+function listAvailableProviders(filter = ''): string[] {
   const packageDeps: string[] = [];
   try {
     const packageJsonPath = path.resolve(process.cwd(), 'package.json');
-    const packageJson: { dependencies: [] } = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8')) as { dependencies: [] };
 
     Object.keys({ ...packageJson.dependencies }).forEach((d) => {
       if (d.includes(filter.toLowerCase())) {

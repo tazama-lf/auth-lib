@@ -44,7 +44,7 @@ class TazamaAuthentication {
     if (this.providerConfig.size === 0) {
       throw new Error('No Provider Config');
     }
-    for await (const provider of this.providerConfig) {
+    for (const provider of this.providerConfig) {
       if (await this.registerProvider(provider)) {
         this.instantiateProvider(provider);
       }
