@@ -31,9 +31,9 @@ class TazamaAuthentication {
   }
 
   /**
-   * Register providers using stored configuration from the constructor or the configureProvider(providerName) method  
-   * Then instantiate each provider on the list  
-   * 
+   * Register providers using stored configuration from the constructor or the configureProvider(providerName) method
+   * Then instantiate each provider on the list
+   *
    * Note: Only the last provider instantiated will be active in current implementation
    *
    * @throws on empty provider config
@@ -79,7 +79,7 @@ class TazamaAuthentication {
   }
 
   /**
-   * Invoking the constructor of a registered provider to instantiate it  
+   * Invoking the constructor of a registered provider to instantiate it
    * Sets the provider as the active provider
    *
    * @param {string} providerName name of provider to instantiate

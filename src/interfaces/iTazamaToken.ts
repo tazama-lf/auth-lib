@@ -13,4 +13,3 @@ interface TazamaToken extends jwt.JwtPayload {
 type ClaimValidationResult = Record<string, boolean>;
 
 export type { ClaimValidationResult, TazamaToken };
-
