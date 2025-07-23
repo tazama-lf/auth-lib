@@ -184,8 +184,8 @@ describe('App Services', () => {
     let instances;
 
     try {
-      authService.configureProvider(testProviderName)
-      await authService.registerProvider(testProviderName)
+      authService.configureProvider(testProviderName);
+      await authService.registerProvider(testProviderName);
 
       configured = authService.getConfigured();
       registered = authService.getRegistered();
@@ -335,8 +335,7 @@ describe('App Services', () => {
       await authService.registerProvider(testProviderName);
 
       authService.instantiateProvider(testProviderName);
-      throw new Error('UNREACHABLE')
-
+      throw new Error('UNREACHABLE');
     } catch (err) {
       // Unreachable
       expect(err).toEqual(new TypeError('providerConstructor is not a constructor'));
@@ -577,6 +576,7 @@ describe('App Services', () => {
       iss: 'aaaa',
       sid: '1234',
       tokenString: 'eyyyyy',
+      tenantId: 'tenant1234',
     };
 
     const signedToken = signToken(testToken);
@@ -593,6 +593,7 @@ describe('App Services', () => {
       iss: 'aaaa',
       sid: '1234',
       tokenString: 'eyyyyy',
+      tenantId: 'tenant1234',
     };
 
     try {
