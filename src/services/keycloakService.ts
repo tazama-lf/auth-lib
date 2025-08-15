@@ -6,6 +6,12 @@ import { type KeycloakAuthToken } from '../interfaces/iKeycloakAuthToken';
 import { type TazamaToken } from '../interfaces/iTazamaToken';
 import { signToken } from './jwtService';
 
+// Extended keycloak token interface to support tenant ID fields
+interface KeycloakJwtTokenWithTenant extends KeycloakJwtToken {
+  tenantId?: string;
+  TENANT_ID?: string;
+}
+
 export class KeycloakService implements IAuthenticationService {
   realm: string;
   baseUrl: string;
@@ -57,7 +63,7 @@ export class KeycloakService implements IAuthenticationService {
    * @returns {Promise<TazamaToken>} - A promise that resolves to a TazamaToken object containing the mapped claims.
   */
   async generateTazamaToken(authToken: KeycloakAuthToken): Promise<TazamaToken> {
-    const decodedToken = jwt.decode(authToken.accessToken);
+    const decodedToken = jwt.decode(authToken.accessToken) as KeycloakJwtTokenWithTenant;
 
     if (!decodedToken || typeof decodedToken === 'string') {
       throw new Error(`Token is in the wrong format, received ${typeof decodedToken}`);
@@ -73,6 +79,7 @@ export class KeycloakService implements IAuthenticationService {
       sid: decodedToken.sid,
       exp: decodedToken.exp,
       tokenString: authToken.accessToken,
+      tenantId: decodedToken.tenantId || decodedToken.TENANT_ID || 'DEFAULT', // Support both tenantId and TENANT_ID for backward compatibility
       claims: this.mapTazamaRoles(decodedToken),
     };
   }
