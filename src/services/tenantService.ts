@@ -14,6 +14,21 @@ export interface TenantValidationOptions {
   tenantIdHeader?: string;
 }
 
+// Extended token interface to support legacy TENANT_ID field for backward compatibility
+interface TazamaTokenWithLegacy extends TazamaToken {
+  TENANT_ID?: string;
+}
+
+/**
+ * Extracts tenant ID from a TazamaToken, supporting both tenantId and TENANT_ID for backward compatibility
+ * @param token - The decoded TazamaToken
+ * @returns The extracted tenant ID or undefined if not found
+ */
+function extractTenantId(token: TazamaToken): string | undefined {
+  const tokenWithLegacy = token as TazamaTokenWithLegacy;
+  return token.tenantId || tokenWithLegacy.TENANT_ID;
+}
+
 /**
  * Validates and extracts tenant ID from JWT token or headers
  * @param authorizationHeader - The authorization header value (Bearer token)
@@ -22,14 +37,14 @@ export interface TenantValidationOptions {
  */
 export function validateAndExtractTenant(
   authorizationHeader?: string,
-  options: TenantValidationOptions = { authenticated: true }
+  options: TenantValidationOptions = { authenticated: true },
 ): TenantValidationResult {
   const { authenticated, defaultTenantId = 'DEFAULT', tenantIdHeader } = options;
 
   try {
     if (authenticated) {
       // Authenticated mode - extract from JWT token
-      if (!authorizationHeader || !authorizationHeader.startsWith('Bearer ')) {
+      if (!authorizationHeader?.startsWith('Bearer ')) {
         return {
           success: false,
           error: 'Missing or invalid authorization header',
@@ -50,10 +65,10 @@ export function validateAndExtractTenant(
           };
         }
 
-        const tazamaToken = decodedToken as TazamaToken;
+        const tazamaToken = decodedToken;
 
         // Check for tenantId in the token (support both tenantId and TENANT_ID for backward compatibility)
-        const tenantId = tazamaToken.tenantId || (tazamaToken as any).TENANT_ID;
+        const tenantId = extractTenantId(tazamaToken);
 
         if (!tenantId || tenantId.trim() === '') {
           return {
@@ -116,10 +131,10 @@ export function validateTokenAndExtractTenant(token: string): TenantValidationRe
       };
     }
 
-    const tazamaToken = decodedToken as TazamaToken;
+    const tazamaToken = decodedToken;
 
     // Check for tenantId in the token (support both tenantId and TENANT_ID for backward compatibility)
-    const tenantId = tazamaToken.tenantId || (tazamaToken as any).TENANT_ID;
+    const tenantId = extractTenantId(tazamaToken);
 
     if (!tenantId || tenantId.trim() === '') {
       return {
