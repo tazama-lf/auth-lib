@@ -1,4 +1,4 @@
-import { type IAuthenticationService } from '../interfaces/iAuthenticationService';
+import type { IAuthenticationService } from '../interfaces/iAuthenticationService';
 import { KeycloakService } from './keycloakService';
 
 export class AuthenticationService implements IAuthenticationService {
