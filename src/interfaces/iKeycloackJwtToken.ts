@@ -1,4 +1,4 @@
-import { type JwtPayload } from 'jsonwebtoken';
+import type { JwtPayload } from 'jsonwebtoken';
 
 export interface KeycloakJwtToken extends JwtPayload {
   resource_access?: Record<string, { roles: string[] }>;
