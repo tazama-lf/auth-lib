@@ -3,7 +3,7 @@ import { TazamaAuthentication, TazamaAuthProvider, TazamaToken, validateTokenAnd
 import { authLibConfig } from '../../src/interfaces/iAuthLibConfig';
 import { signToken } from '../../src/services/jwtService';
 import * as ProviderHelper from '../../src/services/providerHelper';
-import { validateAndExtractTenant, validateTokenAndExtractTenant } from '../../src/services/tenantService';
+import { extractTenant } from '../../src/services/tenantService';
 
 const mockAuthToken = {
   access_token:
@@ -705,9 +705,6 @@ describe('App Services', () => {
 });
 
 describe('Tenant Service', () => {
-  // Mock the verifyToken function for tenant service tests
-  const originalVerifyToken = require('../../src/services/jwtService').verifyToken;
-
   beforeEach(() => {
     // Reset any existing mocks for tenant service tests
     jest.clearAllMocks();
@@ -718,8 +715,8 @@ describe('Tenant Service', () => {
     jest.restoreAllMocks();
   });
 
-  describe('validateAndExtractTenant', () => {
-    it('should extract tenant ID from valid JWT token with tenantId field', () => {
+  describe('extractTenant', () => {
+    it('should extract tenant ID from valid JWT token in authenticated mode', () => {
       // Mock verifyToken to return a valid TazamaToken with tenantId
       jest.spyOn(require('../../src/services/jwtService'), 'verifyToken').mockReturnValue({
         sub: 'test-user',
@@ -732,174 +729,41 @@ describe('Tenant Service', () => {
         claims: ['test-claim'],
       });
 
-      const result = validateAndExtractTenant('Bearer valid-token', { authenticated: true });
+      const result = extractTenant(true, 'Bearer valid-token');
 
       expect(result.success).toBe(true);
       expect(result.tenantId).toBe('test-tenant');
-      expect(result.error).toBeUndefined();
     });
 
-    it('should return error when authorization header is missing', () => {
-      const result = validateAndExtractTenant(undefined, { authenticated: true });
+    it('should return failure when authenticated but no authorization header is provided', () => {
+      const result = extractTenant(true);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Missing or invalid authorization header');
-      expect(result.statusCode).toBe(401);
+      expect(result.tenantId).toBeUndefined();
     });
 
-    it('should return error when authorization header does not start with Bearer', () => {
-      const result = validateAndExtractTenant('Invalid header', { authenticated: true });
+    it('should return failure when authenticated but authorization header is undefined', () => {
+      const result = extractTenant(true, undefined);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Missing or invalid authorization header');
-      expect(result.statusCode).toBe(401);
+      expect(result.tenantId).toBeUndefined();
     });
 
-    it('should return error when JWT token is invalid', () => {
-      // Mock verifyToken to throw an error
-      jest.spyOn(require('../../src/services/jwtService'), 'verifyToken').mockImplementation(() => {
-        throw new Error('jwt malformed');
-      });
-
-      const result = validateAndExtractTenant('Bearer invalid-token', { authenticated: true });
-
-      expect(result.success).toBe(false);
-      expect(result.error).toContain('Failed to decode JWT token');
-      expect(result.statusCode).toBe(401);
-    });
-
-    it('should return error when verifyToken returns string', () => {
-      // Mock verifyToken to return a string (invalid case)
-      jest.spyOn(require('../../src/services/jwtService'), 'verifyToken').mockReturnValue('invalid-string-response');
-
-      const result = validateAndExtractTenant('Bearer token-returning-string', { authenticated: true });
-
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('Invalid JWT token');
-      expect(result.statusCode).toBe(401);
-    });
-
-    it('should return error when tenant ID is missing from token', () => {
-      // Mock verifyToken to return a token without tenantId
-      jest.spyOn(require('../../src/services/jwtService'), 'verifyToken').mockReturnValue({
-        sub: 'test-user',
-        iss: 'test-issuer',
-        exp: Math.floor(Date.now() / 1000) + 3600,
-        sid: 'test-session',
-        tokenString: 'test-token',
-        clientId: 'test-client',
-        claims: ['test-claim'],
-        // No tenantId
-      });
-
-      const result = validateAndExtractTenant('Bearer token-without-tenant', { authenticated: true });
-
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('TENANT_ID attribute is required and cannot be blank');
-      expect(result.statusCode).toBe(403);
-    });
-
-    it('should return error when tenant ID is empty string', () => {
-      // Mock verifyToken to return a token with empty tenantId
-      jest.spyOn(require('../../src/services/jwtService'), 'verifyToken').mockReturnValue({
-        sub: 'test-user',
-        iss: 'test-issuer',
-        exp: Math.floor(Date.now() / 1000) + 3600,
-        sid: 'test-session',
-        tokenString: 'test-token',
-        clientId: 'test-client',
-        tenantId: '   ', // Empty/whitespace only
-        claims: ['test-claim'],
-      });
-
-      const result = validateAndExtractTenant('Bearer token-with-empty-tenant', { authenticated: true });
-
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('TENANT_ID attribute is required and cannot be blank');
-      expect(result.statusCode).toBe(403);
-    });
-
-    it('should extract tenant ID from legacy TENANT_ID field', () => {
-      // Mock verifyToken to return a token with legacy TENANT_ID field
-      jest.spyOn(require('../../src/services/jwtService'), 'verifyToken').mockReturnValue({
-        sub: 'test-user',
-        iss: 'test-issuer',
-        exp: Math.floor(Date.now() / 1000) + 3600,
-        sid: 'test-session',
-        tokenString: 'test-token',
-        clientId: 'test-client',
-        TENANT_ID: 'legacy-tenant', // Legacy field
-        claims: ['test-claim'],
-      });
-
-      const result = validateAndExtractTenant('Bearer legacy-token', { authenticated: true });
-
-      expect(result.success).toBe(true);
-      expect(result.tenantId).toBe('legacy-tenant');
-    });
-
-    it('should use tenant ID from header in unauthenticated mode', () => {
-      const result = validateAndExtractTenant(undefined, {
-        authenticated: false,
-        tenantIdHeader: 'header-tenant',
-      });
-
-      expect(result.success).toBe(true);
-      expect(result.tenantId).toBe('header-tenant');
-    });
-
-    it('should use default tenant ID in unauthenticated mode when header is empty', () => {
-      const result = validateAndExtractTenant(undefined, {
-        authenticated: false,
-        defaultTenantId: 'custom-default',
-      });
-
-      expect(result.success).toBe(true);
-      expect(result.tenantId).toBe('custom-default');
-    });
-
-    it('should use DEFAULT tenant when no header and no custom default in unauthenticated mode', () => {
-      const result = validateAndExtractTenant(undefined, { authenticated: false });
+    it('should return DEFAULT tenant when not authenticated', () => {
+      const result = extractTenant(false);
 
       expect(result.success).toBe(true);
       expect(result.tenantId).toBe('DEFAULT');
     });
 
-    it('should trim whitespace from tenant ID', () => {
-      // Mock verifyToken to return a token with whitespace around tenantId
-      jest.spyOn(require('../../src/services/jwtService'), 'verifyToken').mockReturnValue({
-        sub: 'test-user',
-        iss: 'test-issuer',
-        exp: Math.floor(Date.now() / 1000) + 3600,
-        sid: 'test-session',
-        tokenString: 'test-token',
-        clientId: 'test-client',
-        tenantId: '  spaced-tenant  ',
-        claims: ['test-claim'],
-      });
-
-      const result = validateAndExtractTenant('Bearer spaced-token', { authenticated: true });
+    it('should return DEFAULT tenant when not authenticated even with header provided', () => {
+      const result = extractTenant(false, 'Bearer some-token');
 
       expect(result.success).toBe(true);
-      expect(result.tenantId).toBe('spaced-tenant');
+      expect(result.tenantId).toBe('DEFAULT');
     });
 
-    it('should handle unexpected errors in tenant validation', () => {
-      // Mock verifyToken to throw a non-Error object to test error handling
-      jest.spyOn(require('../../src/services/jwtService'), 'verifyToken').mockImplementation(() => {
-        throw 'String error'; // Non-Error object
-      });
-
-      const result = validateAndExtractTenant('Bearer error-token', { authenticated: true });
-
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('Failed to decode JWT token: String error');
-      expect(result.statusCode).toBe(401);
-    });
-  });
-
-  describe('validateTokenAndExtractTenant', () => {
-    it('should extract tenant ID from valid JWT token', () => {
+    it('should extract tenant ID from token with proper Bearer format', () => {
       // Mock verifyToken to return a valid TazamaToken
       jest.spyOn(require('../../src/services/jwtService'), 'verifyToken').mockReturnValue({
         sub: 'test-user',
@@ -908,32 +772,90 @@ describe('Tenant Service', () => {
         sid: 'test-session',
         tokenString: 'test-token',
         clientId: 'test-client',
-        tenantId: 'direct-tenant',
+        tenantId: 'bearer-tenant',
         claims: ['test-claim'],
       });
 
-      const result = validateTokenAndExtractTenant('valid-token');
+      const result = extractTenant(true, 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...');
 
       expect(result.success).toBe(true);
-      expect(result.tenantId).toBe('direct-tenant');
-      expect(result.error).toBeUndefined();
+      expect(result.tenantId).toBe('bearer-tenant');
     });
 
-    it('should return error when token is invalid', () => {
+    it('should handle verifyToken returning token with different tenant ID', () => {
+      // Mock verifyToken to return a token with a specific tenant ID
+      jest.spyOn(require('../../src/services/jwtService'), 'verifyToken').mockReturnValue({
+        sub: 'user123',
+        iss: 'auth-service',
+        exp: Math.floor(Date.now() / 1000) + 7200,
+        sid: 'session123',
+        tokenString: 'jwt-token-string',
+        clientId: 'client123',
+        tenantId: 'tenant123',
+        claims: ['admin', 'user'],
+      });
+
+      const result = extractTenant(true, 'Bearer mock-jwt-token');
+
+      expect(result.success).toBe(true);
+      expect(result.tenantId).toBe('tenant123');
+    });
+
+    it('should handle verifyToken being called with correct token from authorization header', () => {
+      const verifyTokenSpy = jest.spyOn(require('../../src/services/jwtService'), 'verifyToken').mockReturnValue({
+        sub: 'test-user',
+        iss: 'test-issuer',
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        sid: 'test-session',
+        tokenString: 'test-token',
+        clientId: 'test-client',
+        tenantId: 'spy-tenant',
+        claims: ['test-claim'],
+      });
+
+      const authHeader = 'Bearer mock-token-string';
+      extractTenant(true, authHeader);
+
+      expect(verifyTokenSpy).toHaveBeenCalledWith('mock-token-string');
+    });
+
+    it('should work with different authorization header formats', () => {
+      jest.spyOn(require('../../src/services/jwtService'), 'verifyToken').mockReturnValue({
+        sub: 'test-user',
+        iss: 'test-issuer',
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        sid: 'test-session',
+        tokenString: 'test-token',
+        clientId: 'test-client',
+        tenantId: 'format-tenant',
+        claims: ['test-claim'],
+      });
+
+      // Test with different spacing
+      const result1 = extractTenant(true, 'Bearer token123');
+      expect(result1.success).toBe(true);
+      expect(result1.tenantId).toBe('format-tenant');
+
+      // Test with multiple spaces (should split correctly)
+      const result2 = extractTenant(true, 'Bearer  token-with-spaces');
+      expect(result2.success).toBe(true);
+      expect(result2.tenantId).toBe('format-tenant');
+    });
+
+    it('should handle the case when verifyToken throws an error', () => {
       // Mock verifyToken to throw an error
       jest.spyOn(require('../../src/services/jwtService'), 'verifyToken').mockImplementation(() => {
-        throw new Error('jwt malformed');
+        throw new Error('Invalid token');
       });
 
-      const result = validateTokenAndExtractTenant('invalid-token');
-
-      expect(result.success).toBe(false);
-      expect(result.error).toContain('Failed to validate token and extract tenant');
-      expect(result.statusCode).toBe(401);
+      // The current implementation doesn't handle errors from verifyToken
+      // This test documents the current behavior
+      expect(() => {
+        extractTenant(true, 'Bearer invalid-token');
+      }).toThrow('Invalid token');
     });
 
-    it('should return error when tenant ID is missing from token', () => {
-      // Mock verifyToken to return a token without tenantId
+    it('should handle edge cases with authorization header splitting', () => {
       jest.spyOn(require('../../src/services/jwtService'), 'verifyToken').mockReturnValue({
         sub: 'test-user',
         iss: 'test-issuer',
@@ -941,66 +863,19 @@ describe('Tenant Service', () => {
         sid: 'test-session',
         tokenString: 'test-token',
         clientId: 'test-client',
-        claims: ['test-claim'],
-        // No tenantId
-      });
-
-      const result = validateTokenAndExtractTenant('token-without-tenant');
-
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('TENANT_ID attribute is required and cannot be blank');
-      expect(result.statusCode).toBe(403);
-    });
-
-    it('should support legacy TENANT_ID field', () => {
-      // Mock verifyToken to return a token with legacy TENANT_ID
-      jest.spyOn(require('../../src/services/jwtService'), 'verifyToken').mockReturnValue({
-        sub: 'test-user',
-        iss: 'test-issuer',
-        exp: Math.floor(Date.now() / 1000) + 3600,
-        sid: 'test-session',
-        tokenString: 'test-token',
-        clientId: 'test-client',
-        TENANT_ID: 'legacy-direct-tenant',
+        tenantId: 'split-tenant',
         claims: ['test-claim'],
       });
 
-      const result = validateTokenAndExtractTenant('legacy-token');
+      // Test with only "Bearer" (no token part)
+      const result1 = extractTenant(true, 'Bearer');
+      expect(result1.success).toBe(true);
+      expect(result1.tenantId).toBe('split-tenant');
 
-      expect(result.success).toBe(true);
-      expect(result.tenantId).toBe('legacy-direct-tenant');
-    });
-
-    it('should trim whitespace from extracted tenant ID', () => {
-      // Mock verifyToken to return a token with whitespace
-      jest.spyOn(require('../../src/services/jwtService'), 'verifyToken').mockReturnValue({
-        sub: 'test-user',
-        iss: 'test-issuer',
-        exp: Math.floor(Date.now() / 1000) + 3600,
-        sid: 'test-session',
-        tokenString: 'test-token',
-        clientId: 'test-client',
-        tenantId: '  direct-spaced-tenant  ',
-        claims: ['test-claim'],
-      });
-
-      const result = validateTokenAndExtractTenant('spaced-token');
-
-      expect(result.success).toBe(true);
-      expect(result.tenantId).toBe('direct-spaced-tenant');
-    });
-
-    it('should handle unexpected errors in validateTokenAndExtractTenant', () => {
-      // Mock verifyToken to throw a non-Error object to test error handling
-      jest.spyOn(require('../../src/services/jwtService'), 'verifyToken').mockImplementation(() => {
-        throw 42; // Non-Error object (number)
-      });
-
-      const result = validateTokenAndExtractTenant('error-token');
-
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('Failed to validate token and extract tenant: 42');
-      expect(result.statusCode).toBe(401);
+      // Test with empty string after Bearer
+      const result2 = extractTenant(true, 'Bearer ');
+      expect(result2.success).toBe(true);
+      expect(result2.tenantId).toBe('split-tenant');
     });
   });
 });
