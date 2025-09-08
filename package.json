@@ -1,6 +1,6 @@
 {
   "name": "@tazama-lf/auth-lib",
-  "version": "2.2.0-rc.0",
+  "version": "2.2.0-rc.1",
   "description": "Authentication Library for Tazama",
   "main": "lib/index.js",
   "scripts": {
@@ -10,7 +10,7 @@
     "dry": "npm publish --dry-run",
     "pempriv": "openssl genpkey -algorithm RSA -out private-key.pem -pkeyopt rsa_keygen_bits:2048",
     "pempub": "openssl rsa -pubout -in private-key.pem -out public-key.pem",
-    "test": "npm run pempriv && npm rum pempub && jest --config=jest.config.ts --passWithNoTests",
+    "test": "npm run pempriv && npm run pempub && jest --config=jest.config.ts --passWithNoTests",
     "fix": "npm run fix:prettier && npm run fix:eslint",
     "fix:eslint": "eslint --fix",
     "fix:prettier": "prettier --write \"**/*.ts\"",
@@ -18,7 +18,8 @@
     "lint:eslint": "eslint",
     "lint:eslint-unused": "eslint --report-unused-disable-directives",
     "lint:eslint-no-inline": "eslint --no-inline-config",
-    "lint:prettier": "prettier --check \"**/*.ts\""
+    "lint:prettier": "prettier --check \"**/*.ts\"",
+    "prepare": "husky"
   },
   "files": [
     "lib"
