@@ -34,7 +34,7 @@
   "keywords": [
     "authentication"
   ],
-  "author": "Jean-Pierre Nell",
+  "author": "Tazama.Org",
   "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/tazama-lf/auth-lib/issues"
