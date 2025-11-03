@@ -1,6 +1,6 @@
 {
   "name": "@tazama-lf/auth-lib",
-  "version": "2.2.0-rc.1",
+  "version": "3.0.0",
   "description": "Authentication Library for Tazama",
   "main": "lib/index.js",
   "scripts": {
@@ -34,7 +34,7 @@
   "keywords": [
     "authentication"
   ],
-  "author": "Tazama.Org",
+  "author": "Tazama.org",
   "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/tazama-lf/auth-lib/issues"
