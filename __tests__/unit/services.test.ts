@@ -3,6 +3,7 @@ import { TazamaAuthentication, TazamaAuthProvider, TazamaToken, validateTokenAnd
 import { authLibConfig } from '../../src/interfaces/iAuthLibConfig';
 import { signToken } from '../../src/services/jwtService';
 import * as ProviderHelper from '../../src/services/providerHelper';
+import { extractTenant } from '../../src/services/tenantService';
 
 const mockAuthToken = {
   access_token:
@@ -700,5 +701,181 @@ describe('App Services', () => {
       // unreachable
       expect(true).toEqual(false);
     }
+  });
+});
+
+describe('Tenant Service', () => {
+  beforeEach(() => {
+    // Reset any existing mocks for tenant service tests
+    jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    // Restore original function
+    jest.restoreAllMocks();
+  });
+
+  describe('extractTenant', () => {
+    it('should extract tenant ID from valid JWT token in authenticated mode', () => {
+      // Mock verifyToken to return a valid TazamaToken with tenantId
+      jest.spyOn(require('../../src/services/jwtService'), 'verifyToken').mockReturnValue({
+        sub: 'test-user',
+        iss: 'test-issuer',
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        sid: 'test-session',
+        tokenString: 'test-token',
+        clientId: 'test-client',
+        tenantId: 'test-tenant',
+        claims: ['test-claim'],
+      });
+
+      const result = extractTenant(true, 'Bearer valid-token');
+
+      expect(result.success).toBe(true);
+      expect(result.tenantId).toBe('test-tenant');
+    });
+
+    it('should return failure when authenticated but no authorization header is provided', () => {
+      const result = extractTenant(true);
+
+      expect(result.success).toBe(false);
+      expect(result.tenantId).toBeUndefined();
+    });
+
+    it('should return failure when authenticated but authorization header is undefined', () => {
+      const result = extractTenant(true, undefined);
+
+      expect(result.success).toBe(false);
+      expect(result.tenantId).toBeUndefined();
+    });
+
+    it('should return DEFAULT tenant when not authenticated', () => {
+      const result = extractTenant(false);
+
+      expect(result.success).toBe(true);
+      expect(result.tenantId).toBe('DEFAULT');
+    });
+
+    it('should return DEFAULT tenant when not authenticated even with header provided', () => {
+      const result = extractTenant(false, 'Bearer some-token');
+
+      expect(result.success).toBe(true);
+      expect(result.tenantId).toBe('DEFAULT');
+    });
+
+    it('should extract tenant ID from token with proper Bearer format', () => {
+      // Mock verifyToken to return a valid TazamaToken
+      jest.spyOn(require('../../src/services/jwtService'), 'verifyToken').mockReturnValue({
+        sub: 'test-user',
+        iss: 'test-issuer',
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        sid: 'test-session',
+        tokenString: 'test-token',
+        clientId: 'test-client',
+        tenantId: 'bearer-tenant',
+        claims: ['test-claim'],
+      });
+
+      const result = extractTenant(true, 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...');
+
+      expect(result.success).toBe(true);
+      expect(result.tenantId).toBe('bearer-tenant');
+    });
+
+    it('should handle verifyToken returning token with different tenant ID', () => {
+      // Mock verifyToken to return a token with a specific tenant ID
+      jest.spyOn(require('../../src/services/jwtService'), 'verifyToken').mockReturnValue({
+        sub: 'user123',
+        iss: 'auth-service',
+        exp: Math.floor(Date.now() / 1000) + 7200,
+        sid: 'session123',
+        tokenString: 'jwt-token-string',
+        clientId: 'client123',
+        tenantId: 'tenant123',
+        claims: ['admin', 'user'],
+      });
+
+      const result = extractTenant(true, 'Bearer mock-jwt-token');
+
+      expect(result.success).toBe(true);
+      expect(result.tenantId).toBe('tenant123');
+    });
+
+    it('should handle verifyToken being called with correct token from authorization header', () => {
+      const verifyTokenSpy = jest.spyOn(require('../../src/services/jwtService'), 'verifyToken').mockReturnValue({
+        sub: 'test-user',
+        iss: 'test-issuer',
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        sid: 'test-session',
+        tokenString: 'test-token',
+        clientId: 'test-client',
+        tenantId: 'spy-tenant',
+        claims: ['test-claim'],
+      });
+
+      const authHeader = 'Bearer mock-token-string';
+      extractTenant(true, authHeader);
+
+      expect(verifyTokenSpy).toHaveBeenCalledWith('mock-token-string');
+    });
+
+    it('should work with different authorization header formats', () => {
+      jest.spyOn(require('../../src/services/jwtService'), 'verifyToken').mockReturnValue({
+        sub: 'test-user',
+        iss: 'test-issuer',
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        sid: 'test-session',
+        tokenString: 'test-token',
+        clientId: 'test-client',
+        tenantId: 'format-tenant',
+        claims: ['test-claim'],
+      });
+
+      // Test with different spacing
+      const result1 = extractTenant(true, 'Bearer token123');
+      expect(result1.success).toBe(true);
+      expect(result1.tenantId).toBe('format-tenant');
+
+      // Test with multiple spaces (should split correctly)
+      const result2 = extractTenant(true, 'Bearer  token-with-spaces');
+      expect(result2.success).toBe(true);
+      expect(result2.tenantId).toBe('format-tenant');
+    });
+
+    it('should handle the case when verifyToken throws an error', () => {
+      // Mock verifyToken to throw an error
+      jest.spyOn(require('../../src/services/jwtService'), 'verifyToken').mockImplementation(() => {
+        throw new Error('Invalid token');
+      });
+
+      // The current implementation doesn't handle errors from verifyToken
+      // This test documents the current behavior
+      expect(() => {
+        extractTenant(true, 'Bearer invalid-token');
+      }).toThrow('Invalid token');
+    });
+
+    it('should handle edge cases with authorization header splitting', () => {
+      jest.spyOn(require('../../src/services/jwtService'), 'verifyToken').mockReturnValue({
+        sub: 'test-user',
+        iss: 'test-issuer',
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        sid: 'test-session',
+        tokenString: 'test-token',
+        clientId: 'test-client',
+        tenantId: 'split-tenant',
+        claims: ['test-claim'],
+      });
+
+      // Test with only "Bearer" (no token part)
+      const result1 = extractTenant(true, 'Bearer');
+      expect(result1.success).toBe(true);
+      expect(result1.tenantId).toBe('split-tenant');
+
+      // Test with empty string after Bearer
+      const result2 = extractTenant(true, 'Bearer ');
+      expect(result2.success).toBe(true);
+      expect(result2.tenantId).toBe('split-tenant');
+    });
   });
 });

@@ -1,10 +1,24 @@
 import jwt from 'jsonwebtoken';
 import { authConfig } from '../interfaces/iAuthConfig';
-import { type IAuthenticationService } from '../interfaces/iAuthenticationService';
-import { type KeycloakJwtToken } from '../interfaces/iKeycloackJwtToken';
-import { type KeycloakAuthToken } from '../interfaces/iKeycloakAuthToken';
-import { type TazamaToken } from '../interfaces/iTazamaToken';
+import type { IAuthenticationService } from '../interfaces/iAuthenticationService';
+import type { KeycloakJwtToken } from '../interfaces/iKeycloackJwtToken';
+import type { KeycloakAuthToken } from '../interfaces/iKeycloakAuthToken';
+import type { TazamaToken } from '../interfaces/iTazamaToken';
 import { signToken } from './jwtService';
+
+// Extended keycloak token interface to support tenant ID fields
+interface KeycloakJwtTokenWithTenant extends KeycloakJwtToken {
+  tenantId?: string;
+  TENANT_ID?: string;
+  sid?: string; // Session ID - optional property from JWT
+}
+
+// Interface for Keycloak token response
+interface KeycloakTokenResponse {
+  access_token: string;
+  token_type: string;
+  refresh_token: string;
+}
 
 export class KeycloakService implements IAuthenticationService {
   realm: string;
@@ -22,7 +36,7 @@ export class KeycloakService implements IAuthenticationService {
    * @param {string} username - The username for authentication.
    * @param {string} password - The password for authentication.
    * @returns {Promise<string>} - A promise that resolves to a signed JWT token.
-  */
+   */
   async getToken(username: string, password: string): Promise<string> {
     const form = new URLSearchParams();
     form.append('client_id', authConfig.clientID);
@@ -40,7 +54,7 @@ export class KeycloakService implements IAuthenticationService {
       headers: myHeaders,
       redirect: 'follow',
     });
-    const resBody = JSON.parse(await res.text());
+    const resBody = JSON.parse(await res.text()) as KeycloakTokenResponse;
     const token: KeycloakAuthToken = {
       accessToken: resBody.access_token,
       tokenType: resBody.token_type,
@@ -55,7 +69,7 @@ export class KeycloakService implements IAuthenticationService {
    *
    * @param {KeycloakAuthToken} authToken - The Keycloak authentication token to decode.
    * @returns {Promise<TazamaToken>} - A promise that resolves to a TazamaToken object containing the mapped claims.
-  */
+   */
   async generateTazamaToken(authToken: KeycloakAuthToken): Promise<TazamaToken> {
     const decodedToken = jwt.decode(authToken.accessToken);
 
@@ -63,18 +77,26 @@ export class KeycloakService implements IAuthenticationService {
       throw new Error(`Token is in the wrong format, received ${typeof decodedToken}`);
     }
 
-    if (!decodedToken.sub || !decodedToken.iss || !decodedToken.exp) {
-      throw new Error(`Token is missing required properties: sub: ${decodedToken.sub}, iss: ${decodedToken.iss}, exp: ${decodedToken.exp}`);
+    // Type guard to check if decodedToken has the required properties
+    if (typeof decodedToken !== 'object' || !('sub' in decodedToken) || !('iss' in decodedToken) || !('exp' in decodedToken)) {
+      throw new Error('Token is missing required properties');
     }
 
-    return {
-      clientId: decodedToken.sub,
-      iss: decodedToken.iss,
-      sid: decodedToken.sid,
-      exp: decodedToken.exp,
+    const typedToken = decodedToken as KeycloakJwtTokenWithTenant;
+
+    if (!typedToken.sub || !typedToken.iss || !typedToken.exp) {
+      throw new Error(`Token is missing required properties: sub: ${typedToken.sub}, iss: ${typedToken.iss}, exp: ${typedToken.exp}`);
+    }
+
+    return await Promise.resolve({
+      clientId: typedToken.sub,
+      iss: typedToken.iss,
+      sid: typedToken.sid ?? '', // Provide empty string if sid is undefined
+      exp: typedToken.exp,
       tokenString: authToken.accessToken,
-      claims: this.mapTazamaRoles(decodedToken),
-    };
+      tenantId: typedToken.tenantId ?? typedToken.TENANT_ID ?? 'DEFAULT', // Support both tenantId and TENANT_ID for backward compatibility
+      claims: this.mapTazamaRoles(typedToken),
+    });
   }
 
   /**
@@ -82,13 +104,15 @@ export class KeycloakService implements IAuthenticationService {
    *
    * @param {KeycloakJwtToken} decodedToken - The decoded JWT token from Keycloak.
    * @returns {string[]} - An array of privileges extracted from the decoded token.
-  */
+   */
   mapTazamaRoles(decodedToken: KeycloakJwtToken): string[] {
     const roles: string[] = [];
 
     for (const res in decodedToken.resource_access) {
-      for (const role of decodedToken.resource_access[res].roles) {
-        roles.push(role);
+      if (Object.prototype.hasOwnProperty.call(decodedToken.resource_access, res)) {
+        for (const role of decodedToken.resource_access[res].roles) {
+          roles.push(role);
+        }
       }
     }
 
