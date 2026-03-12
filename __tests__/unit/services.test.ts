@@ -538,6 +538,42 @@ describe('App Services', () => {
     expect(registeredProviders).toEqual([]);
   });
 
+  it('should handle fetchUsersByRole from active and valid provider', async () => {
+    const testProviderName = 'testProvider';
+
+    class TestProviderWithRole implements TazamaAuthProvider<[string], unknown[]> {
+      async getToken(testArg: string): Promise<string> {
+        return testArg;
+      }
+      async fetchUsersByRole(..._args: unknown[]): Promise<unknown[]> {
+        return [{ id: 'user1' }];
+      }
+    }
+
+    const authService = new TazamaAuthentication([testProviderName]);
+
+    jest.spyOn(authService, 'registerProvider').mockImplementation((x: string) => {
+      const provider = TestProviderWithRole.prototype;
+      authService.providerRegistry.set(x, provider.constructor);
+      return Promise.resolve(true);
+    });
+
+    await authService.registerProvider(testProviderName);
+    authService.instantiateProvider(testProviderName);
+
+    const result = await authService.fetchUsersByRole('group', 'role');
+
+    expect(result).toEqual([{ id: 'user1' }]);
+  });
+
+  it('should handle fetchUsersByRole with no active provider', async () => {
+    const authService = new TazamaAuthentication(['testProvider']);
+
+    const result = await authService.fetchUsersByRole('group', 'role');
+
+    expect(result).toEqual([]);
+  });
+
   it('should handle getToken with no active provider', async () => {
     const testProviderName = 'testProvider';
 
