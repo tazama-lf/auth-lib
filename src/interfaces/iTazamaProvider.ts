@@ -1,8 +1,7 @@
-interface TazamaAuthProvider<
-  TgetTokenArgs extends unknown[] = unknown[],
-  TfetchUsersReturnType = unknown[],
-  TfetchUsersArgs extends unknown[] = unknown[],
-> {
+import type { TazamaToken } from './iTazamaToken';
+import type { TazamaUser } from './iTazamaUser';
+
+interface TazamaAuthProvider<TgetTokenArgs extends unknown[] = unknown[]> {
   /**
    * To allow for flexibility around getTokens parameters we make make use of generics
    *
@@ -21,10 +20,10 @@ interface TazamaAuthProvider<
    *
    * @type {(...args: TfetchUsersArgs) => Promise<TfetchUsersReturnType>} returns array of users
    */
-  fetchUsersByRole?: (...args: TfetchUsersArgs) => Promise<TfetchUsersReturnType>;
+  fetchUsersByRole?: (token: TazamaToken, groupName: string, roleName?: string) => Promise<TazamaUser[]>;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-arguments -- Explicit helps with implementers
-type ProviderConstructor = new (...args: unknown[]) => TazamaAuthProvider<unknown[], unknown[], unknown[]>;
+type ProviderConstructor = new (...args: unknown[]) => TazamaAuthProvider<unknown[]>;
 
 export type { TazamaAuthProvider, ProviderConstructor };
