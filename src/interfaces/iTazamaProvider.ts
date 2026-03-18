@@ -20,7 +20,7 @@ interface TazamaAuthProvider<TgetTokenArgs extends unknown[] = unknown[]> {
    *
    * @type {(...args: TfetchUsersArgs) => Promise<TfetchUsersReturnType>} returns array of users
    */
-  fetchUsersByRole?: (token: TazamaToken, groupName: string, roleName?: string) => Promise<TazamaUser[]>;
+  fetchUsersByRole?: (token: TazamaToken, groupName: string, roleName: string) => Promise<TazamaUser[]>;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-arguments -- Explicit helps with implementers

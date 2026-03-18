@@ -193,7 +193,7 @@ class TazamaAuthentication {
    * @param {string} [roleName] optional role name to filter users
    * @returns {Promise<TazamaUser[]>} array of users matching the role criteria
    */
-  async fetchUsersByRole(token: TazamaToken, groupName: string, roleName?: string): Promise<TazamaUser[]> {
+  async fetchUsersByRole(token: TazamaToken, groupName: string, roleName: string): Promise<TazamaUser[]> {
     if (!this.activeInstance || typeof this.activeInstance !== 'string') {
       // No active provider
       return [];
