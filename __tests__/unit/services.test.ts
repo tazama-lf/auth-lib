@@ -1,5 +1,5 @@
 import jwt, { JwtPayload, TokenExpiredError } from 'jsonwebtoken';
-import { TazamaAuthentication, TazamaAuthProvider, TazamaToken, validateTokenAndClaims } from '../../src';
+import { TazamaAuthentication, TazamaAuthProvider, TazamaToken, TazamaUser, validateTokenAndClaims } from '../../src';
 import { authLibConfig } from '../../src/interfaces/iAuthLibConfig';
 import { signToken } from '../../src/services/jwtService';
 import * as ProviderHelper from '../../src/services/providerHelper';
@@ -541,12 +541,12 @@ describe('App Services', () => {
   it('should handle fetchUsersByRole from active and valid provider', async () => {
     const testProviderName = 'testProvider';
 
-    class TestProviderWithRole implements TazamaAuthProvider<[string], unknown[]> {
+    class TestProviderWithRole implements TazamaAuthProvider<[string]> {
       async getToken(testArg: string): Promise<string> {
         return testArg;
       }
-      async fetchUsersByRole(..._args: unknown[]): Promise<unknown[]> {
-        return [{ id: 'user1' }];
+      async fetchUsersByRole(_token: TazamaToken, _groupName: string, _roleName?: string): Promise<TazamaUser[]> {
+        return [{ id: 'user1', username: 'user1', emailVerified: true, enabled: true, createdTimestamp: 0 }];
       }
     }
 
@@ -561,15 +561,17 @@ describe('App Services', () => {
     await authService.registerProvider(testProviderName);
     authService.instantiateProvider(testProviderName);
 
-    const result = await authService.fetchUsersByRole('group', 'role');
+    const mockToken: TazamaToken = { exp: 0, sid: '', iss: '', tokenString: '', clientId: '', tenantId: '', claims: [] };
+    const result = await authService.fetchUsersByRole(mockToken, 'group', 'role');
 
-    expect(result).toEqual([{ id: 'user1' }]);
+    expect(result).toEqual([{ id: 'user1', username: 'user1', emailVerified: true, enabled: true, createdTimestamp: 0 }]);
   });
 
   it('should handle fetchUsersByRole with no active provider', async () => {
     const authService = new TazamaAuthentication(['testProvider']);
 
-    const result = await authService.fetchUsersByRole('group', 'role');
+    const mockToken: TazamaToken = { exp: 0, sid: '', iss: '', tokenString: '', clientId: '', tenantId: '', claims: [] };
+    const result = await authService.fetchUsersByRole(mockToken, 'group', 'role');
 
     expect(result).toEqual([]);
   });
