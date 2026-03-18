@@ -1,10 +1,12 @@
 import type { ProviderConstructor, TazamaAuthProvider } from '../interfaces/iTazamaProvider';
+import type { TazamaToken } from '../interfaces/iTazamaToken';
+import type { TazamaUser } from '../interfaces/iTazamaUser';
 import { dynamicPackageImport } from './providerHelper';
 
 class TazamaAuthentication {
   readonly providerConfig = new Set<string>();
   readonly providerRegistry = new Map<string, unknown>();
-  readonly providerInstances = new Map<string, TazamaAuthProvider<unknown[], unknown>>();
+  readonly providerInstances = new Map<string, TazamaAuthProvider>();
   private activeInstance: undefined | string;
 
   constructor(providerList?: string[]) {
@@ -186,10 +188,12 @@ class TazamaAuthentication {
    * Calls fetchUsersByRole function for the active instantiated provider
    *
    * @async
-   * @param {...unknown[]} args params dependent on active provider implementation
-   * @returns {Promise<unknown>} array of users matching the role criteria
+   * @param {TazamaToken} token token for authentication
+   * @param {string} groupName name of the group to fetch users from
+   * @param {string} [roleName] optional role name to filter users
+   * @returns {Promise<TazamaUser[]>} array of users matching the role criteria
    */
-  async fetchUsersByRole(...args: unknown[]): Promise<unknown> {
+  async fetchUsersByRole(token: TazamaToken, groupName: string, roleName?: string): Promise<TazamaUser[]> {
     if (!this.activeInstance || typeof this.activeInstance !== 'string') {
       // No active provider
       return [];
@@ -198,7 +202,7 @@ class TazamaAuthentication {
     const activeInstance = this.providerInstances.get(this.activeInstance);
 
     if (activeInstance?.fetchUsersByRole) {
-      return await activeInstance.fetchUsersByRole(...args);
+      return await activeInstance.fetchUsersByRole(token, groupName, roleName);
     }
 
     return [];
