@@ -1,3 +1,6 @@
+import type { TazamaToken } from './iTazamaToken';
+import type { TazamaUser } from './iTazamaUser';
+
 interface TazamaAuthProvider<TgetTokenArgs extends unknown[] = unknown[]> {
   /**
    * To allow for flexibility around getTokens parameters we make make use of generics
@@ -11,6 +14,13 @@ interface TazamaAuthProvider<TgetTokenArgs extends unknown[] = unknown[]> {
    * @type {(...args: T) => Promise<string>} returns jwt signed string
    */
   getToken: (...args: TgetTokenArgs) => Promise<string>;
+
+  /**
+   * Fetch users by role from the authentication provider
+   *
+   * @type {(...args: TfetchUsersArgs) => Promise<TfetchUsersReturnType>} returns array of users
+   */
+  fetchUsersByRole?: (token: TazamaToken, groupName: string, roleName: string) => Promise<TazamaUser[]>;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-arguments -- Explicit helps with implementers

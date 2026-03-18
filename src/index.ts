@@ -4,6 +4,7 @@ import * as JwtService from './services/jwtService';
 import { TazamaAuthentication, type TazamaAuthProvider } from './services/tazamaAuthentication';
 import { validateTokenAndClaims } from './services/tazamaService';
 import { extractTenant } from './services/tenantService';
+import type { TazamaUser } from './interfaces/iTazamaUser';
 
 // Providers
 export { AuthProviderConfig, JwtService, TazamaAuthentication };
@@ -11,4 +12,5 @@ export type { TazamaAuthProvider, TazamaToken };
 
 // Clients
 export { validateTokenAndClaims, extractTenant };
+export type { TazamaUser };
 export type { ClaimValidationResult };

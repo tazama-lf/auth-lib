@@ -1,5 +1,5 @@
 import jwt, { JwtPayload, TokenExpiredError } from 'jsonwebtoken';
-import { TazamaAuthentication, TazamaAuthProvider, TazamaToken, validateTokenAndClaims } from '../../src';
+import { TazamaAuthentication, TazamaAuthProvider, TazamaToken, TazamaUser, validateTokenAndClaims } from '../../src';
 import { authLibConfig } from '../../src/interfaces/iAuthLibConfig';
 import { signToken } from '../../src/services/jwtService';
 import * as ProviderHelper from '../../src/services/providerHelper';
@@ -536,6 +536,44 @@ describe('App Services', () => {
     expect(registerProviderSpy).toHaveBeenCalledTimes(1);
     expect(dynamicImportSpy).toHaveBeenCalledTimes(1);
     expect(registeredProviders).toEqual([]);
+  });
+
+  it('should handle fetchUsersByRole from active and valid provider', async () => {
+    const testProviderName = 'testProvider';
+
+    class TestProviderWithRole implements TazamaAuthProvider<[string]> {
+      async getToken(testArg: string): Promise<string> {
+        return testArg;
+      }
+      async fetchUsersByRole(_token: TazamaToken, _groupName: string, _roleName: string): Promise<TazamaUser[]> {
+        return [{ id: 'user1', username: 'user1', emailVerified: true, enabled: true, createdTimestamp: 0 }];
+      }
+    }
+
+    const authService = new TazamaAuthentication([testProviderName]);
+
+    jest.spyOn(authService, 'registerProvider').mockImplementation((x: string) => {
+      const provider = TestProviderWithRole.prototype;
+      authService.providerRegistry.set(x, provider.constructor);
+      return Promise.resolve(true);
+    });
+
+    await authService.registerProvider(testProviderName);
+    authService.instantiateProvider(testProviderName);
+
+    const mockToken: TazamaToken = { exp: 0, sid: '', iss: '', tokenString: '', clientId: '', tenantId: '', claims: [] };
+    const result = await authService.fetchUsersByRole(mockToken, 'group', 'role');
+
+    expect(result).toEqual([{ id: 'user1', username: 'user1', emailVerified: true, enabled: true, createdTimestamp: 0 }]);
+  });
+
+  it('should handle fetchUsersByRole with no active provider', async () => {
+    const authService = new TazamaAuthentication(['testProvider']);
+
+    const mockToken: TazamaToken = { exp: 0, sid: '', iss: '', tokenString: '', clientId: '', tenantId: '', claims: [] };
+    const result = await authService.fetchUsersByRole(mockToken, 'group', 'role');
+
+    expect(result).toEqual([]);
   });
 
   it('should handle getToken with no active provider', async () => {
