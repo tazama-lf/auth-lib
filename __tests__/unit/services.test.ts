@@ -545,7 +545,7 @@ describe('App Services', () => {
       async getToken(testArg: string): Promise<string> {
         return testArg;
       }
-      async fetchUsersByRole(_token: TazamaToken, _groupName: string, _roleName?: string): Promise<TazamaUser[]> {
+      async fetchUsersByRole(_token: TazamaToken, _groupName: string, _roleName: string): Promise<TazamaUser[]> {
         return [{ id: 'user1', username: 'user1', emailVerified: true, enabled: true, createdTimestamp: 0 }];
       }
     }

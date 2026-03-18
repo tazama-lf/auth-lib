@@ -190,7 +190,7 @@ class TazamaAuthentication {
    * @async
    * @param {TazamaToken} token token for authentication
    * @param {string} groupName name of the group to fetch users from
-   * @param {string} [roleName] optional role name to filter users
+   * @param {string} [roleName] role name to filter users
    * @returns {Promise<TazamaUser[]>} array of users matching the role criteria
    */
   async fetchUsersByRole(token: TazamaToken, groupName: string, roleName: string): Promise<TazamaUser[]> {
