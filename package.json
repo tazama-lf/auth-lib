@@ -1,6 +1,6 @@
 {
   "name": "@tazama-lf/auth-lib",
-  "version": "4.0.0-rc.4",
+  "version": "4.0.0-rc.5",
   "description": "Authentication Library for Tazama",
   "main": "lib/index.js",
   "scripts": {
