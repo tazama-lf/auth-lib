@@ -1,5 +1,5 @@
 import jwt, { JwtPayload, TokenExpiredError } from 'jsonwebtoken';
-import { TazamaAuthentication, TazamaAuthProvider, TazamaToken, validateTokenAndClaims } from '../../src';
+import { TazamaAuthentication, TazamaAuthProvider, TazamaToken, TazamaUser, validateTokenAndClaims } from '../../src';
 import { authLibConfig } from '../../src/interfaces/iAuthLibConfig';
 import { signToken } from '../../src/services/jwtService';
 import * as ProviderHelper from '../../src/services/providerHelper';
@@ -538,6 +538,44 @@ describe('App Services', () => {
     expect(registeredProviders).toEqual([]);
   });
 
+  it('should handle fetchUsersByRole from active and valid provider', async () => {
+    const testProviderName = 'testProvider';
+
+    class TestProviderWithRole implements TazamaAuthProvider<[string]> {
+      async getToken(testArg: string): Promise<string> {
+        return testArg;
+      }
+      async fetchUsersByRole(_token: TazamaToken, _groupName: string, _roleName: string): Promise<TazamaUser[]> {
+        return [{ id: 'user1', username: 'user1', emailVerified: true, enabled: true, createdTimestamp: 0 }];
+      }
+    }
+
+    const authService = new TazamaAuthentication([testProviderName]);
+
+    jest.spyOn(authService, 'registerProvider').mockImplementation((x: string) => {
+      const provider = TestProviderWithRole.prototype;
+      authService.providerRegistry.set(x, provider.constructor);
+      return Promise.resolve(true);
+    });
+
+    await authService.registerProvider(testProviderName);
+    authService.instantiateProvider(testProviderName);
+
+    const mockToken: TazamaToken = { exp: 0, sid: '', iss: '', tokenString: '', clientId: '', tenantId: '', claims: [] };
+    const result = await authService.fetchUsersByRole(mockToken, 'group', 'role');
+
+    expect(result).toEqual([{ id: 'user1', username: 'user1', emailVerified: true, enabled: true, createdTimestamp: 0 }]);
+  });
+
+  it('should handle fetchUsersByRole with no active provider', async () => {
+    const authService = new TazamaAuthentication(['testProvider']);
+
+    const mockToken: TazamaToken = { exp: 0, sid: '', iss: '', tokenString: '', clientId: '', tenantId: '', claims: [] };
+    const result = await authService.fetchUsersByRole(mockToken, 'group', 'role');
+
+    expect(result).toEqual([]);
+  });
+
   it('should handle getToken with no active provider', async () => {
     const testProviderName = 'testProvider';
 
@@ -732,35 +770,39 @@ describe('Tenant Service', () => {
       const result = extractTenant(true, 'Bearer valid-token');
 
       expect(result.success).toBe(true);
-      expect(result.tenantId).toBe('test-tenant');
+      if (result.success) {
+        expect(result.tenantId).toBe('test-tenant');
+      }
     });
 
     it('should return failure when authenticated but no authorization header is provided', () => {
       const result = extractTenant(true);
 
       expect(result.success).toBe(false);
-      expect(result.tenantId).toBeUndefined();
     });
 
     it('should return failure when authenticated but authorization header is undefined', () => {
       const result = extractTenant(true, undefined);
 
       expect(result.success).toBe(false);
-      expect(result.tenantId).toBeUndefined();
     });
 
     it('should return DEFAULT tenant when not authenticated', () => {
       const result = extractTenant(false);
 
       expect(result.success).toBe(true);
-      expect(result.tenantId).toBe('DEFAULT');
+      if (result.success) {
+        expect(result.tenantId).toBe('DEFAULT');
+      }
     });
 
     it('should return DEFAULT tenant when not authenticated even with header provided', () => {
       const result = extractTenant(false, 'Bearer some-token');
 
       expect(result.success).toBe(true);
-      expect(result.tenantId).toBe('DEFAULT');
+      if (result.success) {
+        expect(result.tenantId).toBe('DEFAULT');
+      }
     });
 
     it('should extract tenant ID from token with proper Bearer format', () => {
@@ -779,7 +821,9 @@ describe('Tenant Service', () => {
       const result = extractTenant(true, 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...');
 
       expect(result.success).toBe(true);
-      expect(result.tenantId).toBe('bearer-tenant');
+      if (result.success) {
+        expect(result.tenantId).toBe('bearer-tenant');
+      }
     });
 
     it('should handle verifyToken returning token with different tenant ID', () => {
@@ -798,7 +842,9 @@ describe('Tenant Service', () => {
       const result = extractTenant(true, 'Bearer mock-jwt-token');
 
       expect(result.success).toBe(true);
-      expect(result.tenantId).toBe('tenant123');
+      if (result.success) {
+        expect(result.tenantId).toBe('tenant123');
+      }
     });
 
     it('should handle verifyToken being called with correct token from authorization header', () => {
@@ -834,12 +880,16 @@ describe('Tenant Service', () => {
       // Test with different spacing
       const result1 = extractTenant(true, 'Bearer token123');
       expect(result1.success).toBe(true);
-      expect(result1.tenantId).toBe('format-tenant');
+      if (result1.success) {
+        expect(result1.tenantId).toBe('format-tenant');
+      }
 
       // Test with multiple spaces (should split correctly)
       const result2 = extractTenant(true, 'Bearer  token-with-spaces');
       expect(result2.success).toBe(true);
-      expect(result2.tenantId).toBe('format-tenant');
+      if (result2.success) {
+        expect(result2.tenantId).toBe('format-tenant');
+      }
     });
 
     it('should handle the case when verifyToken throws an error', () => {
@@ -870,12 +920,122 @@ describe('Tenant Service', () => {
       // Test with only "Bearer" (no token part)
       const result1 = extractTenant(true, 'Bearer');
       expect(result1.success).toBe(true);
-      expect(result1.tenantId).toBe('split-tenant');
+      if (result1.success) {
+        expect(result1.tenantId).toBe('split-tenant');
+      }
 
       // Test with empty string after Bearer
       const result2 = extractTenant(true, 'Bearer ');
       expect(result2.success).toBe(true);
-      expect(result2.tenantId).toBe('split-tenant');
+      if (result2.success) {
+        expect(result2.tenantId).toBe('split-tenant');
+      }
+    });
+
+    // Security fix tests for issue #170
+    describe('security: tenant isolation (issue #170)', () => {
+      it('should return failure when authenticated=true and decoded token has no tenantId property', () => {
+        // Mock verifyToken to return a token WITHOUT tenantId property
+        jest.spyOn(require('../../src/services/jwtService'), 'verifyToken').mockReturnValue({
+          sub: 'test-user',
+          iss: 'test-issuer',
+          exp: Math.floor(Date.now() / 1000) + 3600,
+          sid: 'test-session',
+          tokenString: 'test-token',
+          clientId: 'test-client',
+          // tenantId is missing
+          claims: ['test-claim'],
+        });
+
+        const result = extractTenant(true, 'Bearer valid-token-no-tenant');
+
+        expect(result.success).toBe(false);
+      });
+
+      it('should return failure when authenticated=true and tenantId is undefined', () => {
+        // Mock verifyToken to return a token with tenantId explicitly set to undefined
+        jest.spyOn(require('../../src/services/jwtService'), 'verifyToken').mockReturnValue({
+          sub: 'test-user',
+          iss: 'test-issuer',
+          exp: Math.floor(Date.now() / 1000) + 3600,
+          sid: 'test-session',
+          tokenString: 'test-token',
+          clientId: 'test-client',
+          tenantId: undefined,
+          claims: ['test-claim'],
+        });
+
+        const result = extractTenant(true, 'Bearer token-with-undefined-tenant');
+
+        expect(result.success).toBe(false);
+      });
+
+      it('should return failure when authenticated=true and tenantId is null', () => {
+        // Mock verifyToken to return a token with tenantId set to null
+        jest.spyOn(require('../../src/services/jwtService'), 'verifyToken').mockReturnValue({
+          sub: 'test-user',
+          iss: 'test-issuer',
+          exp: Math.floor(Date.now() / 1000) + 3600,
+          sid: 'test-session',
+          tokenString: 'test-token',
+          clientId: 'test-client',
+          tenantId: null,
+          claims: ['test-claim'],
+        });
+
+        const result = extractTenant(true, 'Bearer token-with-null-tenant');
+
+        expect(result.success).toBe(false);
+      });
+
+      it('should return failure when authenticated=true and tenantId is empty string', () => {
+        // Mock verifyToken to return a token with tenantId set to empty string
+        jest.spyOn(require('../../src/services/jwtService'), 'verifyToken').mockReturnValue({
+          sub: 'test-user',
+          iss: 'test-issuer',
+          exp: Math.floor(Date.now() / 1000) + 3600,
+          sid: 'test-session',
+          tokenString: 'test-token',
+          clientId: 'test-client',
+          tenantId: '',
+          claims: ['test-claim'],
+        });
+
+        const result = extractTenant(true, 'Bearer token-with-empty-tenant');
+
+        expect(result.success).toBe(false);
+      });
+
+      it('should still return DEFAULT tenant when authenticated=false (no-auth mode unchanged)', () => {
+        // Verify that the no-auth path is not affected by the security fix
+        const result = extractTenant(false);
+
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.tenantId).toBe('DEFAULT');
+        }
+      });
+
+      it('should accept valid tenantId when authenticated=true (positive test)', () => {
+        // Mock verifyToken to return a token with a valid tenantId
+        jest.spyOn(require('../../src/services/jwtService'), 'verifyToken').mockReturnValue({
+          sub: 'test-user',
+          iss: 'test-issuer',
+          exp: Math.floor(Date.now() / 1000) + 3600,
+          sid: 'test-session',
+          tokenString: 'test-token',
+          clientId: 'test-client',
+          tenantId: 'valid-tenant-123',
+          claims: ['test-claim'],
+        });
+
+        const result = extractTenant(true, 'Bearer valid-token');
+
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.tenantId).toBe('valid-tenant-123');
+        }
+      });
     });
   });
 });

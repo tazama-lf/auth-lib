@@ -1,4 +1,6 @@
 import type { ProviderConstructor, TazamaAuthProvider } from '../interfaces/iTazamaProvider';
+import type { TazamaToken } from '../interfaces/iTazamaToken';
+import type { TazamaUser } from '../interfaces/iTazamaUser';
 import { dynamicPackageImport } from './providerHelper';
 
 class TazamaAuthentication {
@@ -180,6 +182,30 @@ class TazamaAuthentication {
     }
 
     return token;
+  }
+
+  /**
+   * Calls fetchUsersByRole function for the active instantiated provider
+   *
+   * @async
+   * @param {TazamaToken} token token for authentication
+   * @param {string} groupName name of the group to fetch users from
+   * @param {string} [roleName] role name to filter users
+   * @returns {Promise<TazamaUser[]>} array of users matching the role criteria
+   */
+  async fetchUsersByRole(token: TazamaToken, groupName: string, roleName: string): Promise<TazamaUser[]> {
+    if (!this.activeInstance || typeof this.activeInstance !== 'string') {
+      // No active provider
+      return [];
+    }
+
+    const activeInstance = this.providerInstances.get(this.activeInstance);
+
+    if (activeInstance?.fetchUsersByRole) {
+      return await activeInstance.fetchUsersByRole(token, groupName, roleName);
+    }
+
+    return [];
   }
 }
 

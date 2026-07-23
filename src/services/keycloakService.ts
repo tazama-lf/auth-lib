@@ -88,13 +88,18 @@ export class KeycloakService implements IAuthenticationService {
       throw new Error(`Token is missing required properties: sub: ${typedToken.sub}, iss: ${typedToken.iss}, exp: ${typedToken.exp}`);
     }
 
+    const tenantId = typedToken.tenantId ?? typedToken.TENANT_ID;
+    if (!tenantId) {
+      throw new Error('Token is missing required tenant_id claim. User must be assigned to a tenant group in Keycloak.');
+    }
+
     return await Promise.resolve({
       clientId: typedToken.sub,
       iss: typedToken.iss,
       sid: typedToken.sid ?? '', // Provide empty string if sid is undefined
       exp: typedToken.exp,
       tokenString: authToken.accessToken,
-      tenantId: typedToken.tenantId ?? typedToken.TENANT_ID ?? 'DEFAULT', // Support both tenantId and TENANT_ID for backward compatibility
+      tenantId,
       claims: this.mapTazamaRoles(typedToken),
     });
   }
